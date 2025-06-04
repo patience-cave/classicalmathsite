@@ -19,6 +19,15 @@
             const user = await getCurrentUser();
             updateUI(user);
             loadLessonContent();
+
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', async (event) => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const lessonId = urlParams.get('file');
+                if (lessonId) {
+                    await loadLessonContent();
+                }
+            });
         });
     </script>
     <style>
@@ -761,7 +770,7 @@
                 // Check for next lesson in current chapter
                 if (currentLessonIndex < course[currentChapter].length - 1) {
                     const nextLesson = course[currentChapter][currentLessonIndex + 1];
-                    return `lessons.html?file=${nextLesson.file}`;
+                    return nextLesson.file;
                 }
                 
                 // Check for next chapter
@@ -770,7 +779,7 @@
                 if (currentChapterIndex < chapters.length - 1) {
                     const nextChapter = chapters[currentChapterIndex + 1];
                     const nextLesson = course[nextChapter][0];
-                    return `lessons.html?file=${nextLesson.file}`;
+                    return nextLesson.file;
                 }
                 
                 return null;
@@ -779,17 +788,103 @@
             function getPreviousLessonLink() {
                 if (currentLessonIndex > 0) {
                     const prevLesson = course[currentChapter][currentLessonIndex - 1];
-                    return `lessons.html?file=${prevLesson.file}`;
+                    return prevLesson.file;
                 }
                 return null;
+            }
+
+            async function navigateToLesson(lessonId) {
+                if (!lessonId) return;
+                
+                // Update URL without page reload
+                const newUrl = `lessons.html?file=${lessonId}`;
+                history.pushState({ lessonId }, '', newUrl);
+                
+                // Reset lesson content and show loading state
+                const lessonContent = document.getElementById('lesson-content');
+                lessonContent.classList.remove('loaded');
+                lessonContent.innerHTML = '<p class="text-center text-gray-600">Loading...</p>';
+                
+                try {
+                    // Find the new lesson details
+                    let newChapter = null;
+                    let newLessonIndex = -1;
+                    let newLesson = null;
+                    
+                    for (const [chapter, lessons] of Object.entries(course)) {
+                        const lessonIndex = lessons.findIndex(lesson => lesson.file === lessonId);
+                        if (lessonIndex !== -1) {
+                            newChapter = chapter;
+                            newLessonIndex = lessonIndex;
+                            newLesson = lessons[lessonIndex];
+                            break;
+                        }
+                    }
+                    
+                    if (!newLesson) throw new Error('Lesson not found');
+                    
+                    // Update lesson type and progress
+                    const lessonType = document.getElementById('lessonType');
+                    const lessonProgress = document.getElementById('lessonProgress');
+                    const progressBar = document.getElementById('progress-bar');
+                    
+                    lessonType.textContent = newLesson.type;
+                    lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        newLesson.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`;
+                    
+                    const totalLessons = course[newChapter].length;
+                    lessonProgress.textContent = `${newLessonIndex + 1}/${totalLessons}`;
+                    
+                    // Update progress bar
+                    const progress = ((newLessonIndex + 1) / totalLessons) * 100;
+                    const oldProgress = updateProgress(progress);
+                    progressBar.style.width = oldProgress + '%';
+                    setTimeout(() => {
+                        progressBar.style.width = progress + '%';
+                    }, 100);
+                    
+                    // Update background image
+                    const existingBg = document.querySelector('.background-image');
+                    if (existingBg) {
+                        existingBg.remove();
+                    }
+                    if (newLesson.bg) {
+                        const bgDiv = document.createElement('div');
+                        bgDiv.className = 'background-image';
+                        bgDiv.style.backgroundImage = `url('images/${newLesson.bg}')`;
+                        document.documentElement.appendChild(bgDiv);
+                    }
+                    
+                    lessonContent.innerHTML = '<p class="text-center text-gray-600">.</p>';
+
+                    // Load new lesson content
+                    const content = await lesson(lessonId);
+                    if (content == null) {
+                        lessonContent.innerHTML = '<p class="text-center text-gray-600">This page is empty.</p>';
+                    } else {
+                        lessonContent.innerHTML = content;
+                    }
+                    lessonContent.classList.add('loaded');
+                    
+                    // Update navigation for the new lesson
+                    setupNavigation(course, newChapter, newLessonIndex);
+                    
+                } catch (error) {
+                    console.error('Error navigating to lesson:', error);
+                    lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
+                    lessonContent.classList.add('loaded');
+                }
             }
 
             // Update navigation buttons
             const prevLink = getPreviousLessonLink();
             if (prevLink) {
-                document.getElementById('prevLesson').onclick = () => {
-                    window.location.href = prevLink;
+                document.getElementById('prevLesson').onclick = (e) => {
+                    e.preventDefault();
+                    navigateToLesson(prevLink);
                 };
+                document.getElementById('prevLesson').style.display = '';
             } else {
                 document.getElementById('prevLesson').style.display = 'none';
             }
@@ -810,12 +905,15 @@
                 nextButton.innerHTML = buttonHtml;
                 nextButtonFooter.innerHTML = buttonHtml;
                 
-                const clickHandler = () => {
-                    window.location.href = nextLink;
+                const clickHandler = (e) => {
+                    e.preventDefault();
+                    navigateToLesson(nextLink);
                 };
                 
                 nextButton.onclick = clickHandler;
                 nextButtonFooter.onclick = clickHandler;
+                nextButton.style.display = '';
+                nextButtonFooter.style.display = '';
             } else {
                 // Last lesson of last chapter
                 nextButton.innerHTML = `
