@@ -4,9 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>History of Arithmetic - Course</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module">
+        // Import our API module
+        import { getCurrentUser, signOut } from './js/api.js';
+        // Make functions available globally
+        window.getCurrentUser = getCurrentUser;
+        window.signOut = signOut;
+
+        // Check auth state on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await getCurrentUser();
+            updateUI(user);
+        });
+    </script>
     <style>
         :root {
             --primary: #2563eb;
@@ -31,13 +45,12 @@
             line-height: 1.6;
             color: var(--text);
             background: var(--background);
-            padding: var(--spacing);
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: var(--spacing) 0;
+            padding: var(--spacing);
         }
 
         h1 {
@@ -134,7 +147,7 @@
         }
 
         @media (max-width: 640px) {
-            body {
+            .container {
                 padding: 1rem;
             }
 
@@ -153,6 +166,21 @@
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-xl font-semibold text-gray-800">Classical Math</a>
+                </div>
+                <div class="flex items-center">
+                    <div id="userStatus" class="text-gray-600 mr-4"></div>
+                    <div id="authButtons"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
         <h1>History of Arithmetic</h1>
         <div class="course-content" id="courseContent">
@@ -197,6 +225,34 @@
             chapter.classList.toggle('active');
             const icon = chapter.querySelector('.toggle-icon');
             icon.textContent = chapter.classList.contains('active') ? '▼' : '▶';
+        }
+
+        // Update UI based on user state
+        function updateUI(user) {
+            const userStatus = document.getElementById('userStatus');
+            const authButtons = document.getElementById('authButtons');
+            
+            if (user) {
+                userStatus.textContent = `Welcome ${user.email}`;
+                authButtons.innerHTML = `
+                    <button onclick="handleSignOut()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">Sign Out</button>
+                `;
+            } else {
+                userStatus.textContent = '';
+                authButtons.innerHTML = `
+                    <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Sign In</button>
+                `;
+            }
+        }
+
+        // Handle sign out
+        async function handleSignOut() {
+            try {
+                await signOut();
+                updateUI(null);
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
         }
 
         // Load the course when the page loads
