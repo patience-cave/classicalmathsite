@@ -447,8 +447,8 @@
                 <div class="px-6 py-4">
                     <div class="flex flex-col items-center mb-4">
                         <div class="flex items-center gap-4 mb-4">
-                            <span id="lessonType" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                Loading...
+                            <span id="lessonType" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                Loading
                             </span>
                             <div id="lessonProgress" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-sm text-gray-600">
                                 0/0
@@ -651,81 +651,154 @@
                 // Get lesson ID from URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
                 const lessonId = urlParams.get('file');
-                
+
                 if (!lessonId) {
                     lessonContent.innerHTML = '<p class="text-center text-gray-600">No lesson ID provided.</p>';
                     lessonContent.classList.add('loaded');
                     return;
                 }
 
+                // Load course.json to get lesson information
+                const courseResponse = await fetch('course.json');
+                const course = await courseResponse.json();
+
+                // Find the current lesson and its chapter
+                let currentChapter = null;
+                let currentLessonIndex = -1;
+                let totalLessons = 0;
+                
+                for (const [chapter, lessons] of Object.entries(course)) {
+                    const lessonIndex = lessons.findIndex(lesson => lesson.file === lessonId);
+                    if (lessonIndex !== -1) {
+                        currentChapter = chapter;
+                        currentLessonIndex = lessonIndex;
+                        totalLessons = lessons.length;
+                        break;
+                    }
+                }
+
+                if (currentLessonIndex === -1) {
+                    lessonContent.innerHTML = '<p class="text-center text-gray-600">Lesson not found in course structure.</p>';
+                    lessonContent.classList.add('loaded');
+                    return;
+                }
+                
+                // Update lesson progress
+                lessonProgress.textContent = `${currentLessonIndex + 1}/${totalLessons}`;
+                
+                // Calculate progress percentage
+                const progress = ((currentLessonIndex + 1) / totalLessons) * 100;
+                const oldProgress = updateProgress(progress);
+                progressBar.style.width = oldProgress + '%';
+                setTimeout(() => {
+                    progressBar.style.width = progress + '%';
+                }, 100);
+                // Load lesson content
                 const content = await lesson(lessonId);
-                console.log(content);
+                
                 if (content == null) {
                     lessonContent.innerHTML = '<p class="text-center text-gray-600">This page is empty.</p>';
+                    lessonContent.classList.add('loaded');
                 } else {
                     // The API returns the HTML content as a string
                     lessonContent.innerHTML = content;
-                    
-                    // Update lesson metadata
-                    if (content.type) {
-                        lessonType.textContent = content.type;
-                        lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            content.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                        }`;
-                    }
-                    
-                    if (content.current_lesson && content.total_lessons) {
-                        lessonProgress.textContent = `${content.current_lesson}/${content.total_lessons}`;
-                    }
-
-                    // Update progress bar
-                    if (content.progress) {
-                        const newProgress = content.progress;
-                        const oldProgress = updateProgress(newProgress);
-                        progressBar.style.width = oldProgress + '%';
-                        setTimeout(() => {
-                            progressBar.style.width = newProgress + '%';
-                        }, 100);
-                    }
-
-                    // Update navigation buttons
-                    if (content.prev_info) {
-                        document.getElementById('prevLesson').onclick = () => window.location.href = `lessons.html?file=${content.prev_info.file}`;
-                    } else {
-                        document.getElementById('prevLesson').style.display = 'none';
-                    }
-
-                    if (content.next_info) {
-                        const nextButton = document.getElementById('nextLesson');
-                        const nextButtonFooter = document.getElementById('nextLessonFooter');
-                        
-                        if (content.next_info.type === 'finish') {
-                            nextButton.innerHTML = `
-                                <div class="text-center">
-                                    <p class="text-lg font-medium text-gray-900">Congratulations! You've completed the course!</p>
-                                    <a href="course.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                        Return to Course Overview
-                                    </a>
-                                </div>
-                            `;
-                            nextButtonFooter.style.display = 'none';
-                        } else {
-                            const buttonText = content.next_info.type === 'next_chapter' ? 'Next Chapter' : 'Next Lesson';
-                            nextButton.innerHTML = `
-                                ${buttonText}
-                                <svg class="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            `;
-                            nextButtonFooter.innerHTML = nextButton.innerHTML;
-                            nextButton.onclick = () => window.location.href = `lessons.html?file=${content.next_info.file}`;
-                            nextButtonFooter.onclick = nextButton.onclick;
-                        }
-                    } else {
-                        document.getElementById('nextLesson').style.display = 'none';
-                        document.getElementById('nextLessonFooter').style.display = 'none';
-                    }
                 }
+                
+                // Update lesson metadata
+                currentLesson = course[currentChapter][currentLessonIndex]
+                lessonType.textContent = currentLesson.type;
+                lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    currentLesson.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                }`;
+                
+                // Navigation functions
+                function getNextLessonLink() {
+                    // Check for next lesson in current chapter
+                    if (currentLessonIndex < course[currentChapter].length - 1) {
+                        const nextLesson = course[currentChapter][currentLessonIndex + 1];
+                        return `lessons.html?file=${nextLesson.file}`;
+                    }
+                    
+                    // Check for next chapter
+                    const chapters = Object.keys(course);
+                    const currentChapterIndex = chapters.indexOf(currentChapter);
+                    if (currentChapterIndex < chapters.length - 1) {
+                        const nextChapter = chapters[currentChapterIndex + 1];
+                        const nextLesson = course[nextChapter][0];
+                        return `lessons.html?file=${nextLesson.file}`;
+                    }
+                    
+                    return null;
+                }
+
+                function getPreviousLessonLink() {
+                    if (currentLessonIndex > 0) {
+                        const prevLesson = course[currentChapter][currentLessonIndex - 1];
+                        return `lessons.html?file=${prevLesson.file}`;
+                    }
+                    return null;
+                }
+
+                // Update navigation buttons
+                const prevLink = getPreviousLessonLink();
+                if (prevLink) {
+                    document.getElementById('prevLesson').onclick = () => {
+                        const link = getPreviousLessonLink();
+                        window.location.href = link;
+                    };
+                } else {
+                    document.getElementById('prevLesson').style.display = 'none';
+                }
+
+                const nextButton = document.getElementById('nextLesson');
+                const nextButtonFooter = document.getElementById('nextLessonFooter');
+                const nextLink = getNextLessonLink();
+
+                if (nextLink) {
+                    // Determine if it's next lesson or next chapter
+                    const isNextChapter = currentLessonIndex === course[currentChapter].length - 1;
+                    const buttonHtml = `
+                        ${isNextChapter ? 'Next Chapter' : 'Next Lesson'}
+                        <svg class="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    `;
+                    nextButton.innerHTML = buttonHtml;
+                    nextButtonFooter.innerHTML = buttonHtml;
+                    
+                    nextButton.onclick = () => {
+                        const link = getNextLessonLink();
+                        window.location.href = link;
+                    };
+                    
+                    nextButtonFooter.onclick = () => {
+                        const link = getNextLessonLink();
+                        window.location.href = link;
+                    };
+
+                    // Also add addEventListener as a backup
+                    nextButton.addEventListener('click', (e) => {
+                        const link = getNextLessonLink();
+                        window.location.href = link;
+                    });
+
+                    nextButtonFooter.addEventListener('click', (e) => {
+                        const link = getNextLessonLink();
+                        window.location.href = link;
+                    });
+                } else {
+                    // Last lesson of last chapter
+                    nextButton.innerHTML = `
+                        <div class="text-center">
+                            <p class="text-lg font-medium text-gray-900">Congratulations! You've completed the course!</p>
+                            <a href="course.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                Return to Course Overview
+                            </a>
+                        </div>
+                    `;
+                    nextButtonFooter.style.display = 'none';
+                }
+                
                 lessonContent.classList.add('loaded');
             } catch (error) {
                 console.error('Error loading lesson:', error);

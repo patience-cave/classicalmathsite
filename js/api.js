@@ -87,6 +87,6 @@ export async function lesson(lessonId) {
     return result.data;
   } catch (error) {
     console.error('Error getting lesson:', error);
-    throw error;
+    return null;
   }
 }
