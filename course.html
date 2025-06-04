@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History of Arithmetic - Course</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --background: #ffffff;
+            --surface: #f9fafb;
+            --border: #e5e7eb;
+            --radius: 12px;
+            --spacing: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--background);
+            padding: var(--spacing);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing) 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--text);
+            text-align: center;
+        }
+
+        .chapter {
+            margin: 1rem 0;
+            background: var(--surface);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .chapter-header {
+            padding: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .chapter-header:hover {
+            background-color: rgba(37, 99, 235, 0.05);
+        }
+
+        .chapter-header h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .toggle-icon {
+            color: var(--text-light);
+            transition: transform 0.3s ease;
+        }
+
+        .chapter.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .chapter-content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .chapter.active .chapter-content {
+            padding: 0.5rem 0;
+            max-height: 1000px;
+        }
+
+        .lesson-link {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .lesson-link:hover {
+            background-color: rgba(37, 99, 235, 0.05);
+            border-left-color: var(--primary);
+        }
+
+        .lesson-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .type-story {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .type-lesson {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .chapter-header {
+                padding: 1rem;
+            }
+
+            .lesson-link {
+                padding: 0.875rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>History of Arithmetic</h1>
+        <div class="course-content" id="courseContent">
+            <!-- Content will be dynamically loaded here -->
+        </div>
+    </div>
+
+    <script>
+        async function loadCourse() {
+            try {
+                const response = await fetch('course.json');
+                const course = await response.json();
+                const courseContent = document.getElementById('courseContent');
+                
+                Object.entries(course).forEach(([chapter, lessons], index) => {
+                    const chapterDiv = document.createElement('div');
+                    chapterDiv.className = `chapter ${index === 0 ? 'active' : ''}`;
+                    
+                    chapterDiv.innerHTML = `
+                        <div class="chapter-header" onclick="toggleChapter(this.parentElement)">
+                            <h2>${chapter}</h2>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="chapter-content">
+                            ${lessons.map(lesson => `
+                                <a href="lesson.html?file=${lesson.file}" class="lesson-link">
+                                    <span class="lesson-type type-${lesson.type.toLowerCase()}">${lesson.type}</span>
+                                    ${lesson.name}
+                                </a>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    courseContent.appendChild(chapterDiv);
+                });
+            } catch (error) {
+                console.error('Error loading course:', error);
+            }
+        }
+
+        function toggleChapter(chapter) {
+            chapter.classList.toggle('active');
+            const icon = chapter.querySelector('.toggle-icon');
+            icon.textContent = chapter.classList.contains('active') ? '▼' : '▶';
+        }
+
+        // Load the course when the page loads
+        document.addEventListener('DOMContentLoaded', loadCourse);
+    </script>
+</body>
+</html> 
