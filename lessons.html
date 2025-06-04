@@ -659,8 +659,11 @@
                 }
 
                 // Load course.json to get lesson information
-                const courseResponse = await fetch('course.json');
+                const courseResponse = await fetch('course.json', {
+                    cache: 'no-store' // Bypass cache
+                });
                 const course = await courseResponse.json();
+                console.log('Loaded course data:', course);
 
                 // Find the current lesson and its chapter
                 let currentChapter = null;
@@ -673,6 +676,7 @@
                         currentChapter = chapter;
                         currentLessonIndex = lessonIndex;
                         totalLessons = lessons.length;
+                        console.log('Found lesson:', lessons[lessonIndex]);
                         break;
                     }
                 }
@@ -710,6 +714,39 @@
                 lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                     currentLesson.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                 }`;
+                
+                // Add background image if lesson has bg property
+                const existingBg = document.querySelector('.background-image');
+                if (existingBg) {
+                    existingBg.remove();
+                }
+                if (currentLesson.bg) {
+                    console.log('Adding background image:', currentLesson.bg);
+                    const bgDiv = document.createElement('div');
+                    bgDiv.className = 'background-image';
+                    // Use relative path instead of absolute path
+                    const bgUrl = `images/${currentLesson.bg}`;
+                    bgDiv.style.backgroundImage = `url('${bgUrl}')`;
+                    // Add inline styles for debugging
+                    bgDiv.style.position = 'fixed';
+                    bgDiv.style.top = '0';
+                    bgDiv.style.left = '0';
+                    bgDiv.style.width = '100%';
+                    bgDiv.style.height = '100%';
+                    bgDiv.style.backgroundSize = 'cover';
+                    bgDiv.style.backgroundPosition = 'center';
+                    bgDiv.style.backgroundRepeat = 'no-repeat';
+                    bgDiv.style.opacity = '0.15';
+                    bgDiv.style.zIndex = '-1';
+                    // Add to the root element instead of body
+                    document.documentElement.appendChild(bgDiv);
+                    console.log('Background div added with URL:', bgUrl);
+                    // Verify the image loads
+                    const img = new Image();
+                    img.onload = () => console.log('Background image loaded successfully');
+                    img.onerror = (err) => console.error('Background image failed to load:', err);
+                    img.src = bgUrl;
+                }
                 
                 // Navigation functions
                 function getNextLessonLink() {

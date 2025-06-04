@@ -4,13 +4,13 @@
             "type": "Story",
             "file": "thales.txt",
             "name": "Thales",
-            "bg": "thales_bg.png"
+            "bg": "thales_bg.webp"
         },
         {
             "type": "Lesson",
             "file": "lesson1.txt",
             "name": "The Definition of Numbers",
-            "bg": "thales_bg.png"
+            "bg": "thales_bg.webp"
         },
         {
             "type": "Story",
