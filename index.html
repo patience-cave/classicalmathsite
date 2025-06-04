@@ -39,7 +39,7 @@
   </script>
 </head>
 <body>
-  <h1>Testing!!!</h1>
+  <h1>Testing!!!!</h1>
   <button onclick="pingServer()">Ping Server</button>
   <p id="response"></p>
 
@@ -56,10 +56,7 @@
         const pingFunction = httpsCallable(functions, 'ping');
         const result = await pingFunction();
         console.log('Full response:', result); // Debug log
-        if (!result || !result.data) {
-          throw new Error('Invalid response format from server');
-        }
-        document.getElementById('response').textContent = result.data.message;
+        document.getElementById('response').textContent = result.data.data.message;
       } catch (error) {
         console.error('Ping error:', error); // Debug log
         document.getElementById('response').textContent = "Error: " + error.message;
