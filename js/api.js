@@ -78,3 +78,15 @@ export async function signOut() {
     throw error;
   }
 }
+
+// Get lesson content
+export async function lesson(lessonId) {
+  try {
+    const lessonFunction = httpsCallable(firebaseFunctions, 'lesson');
+    const result = await lessonFunction({ lessonId });
+    return result.data;
+  } catch (error) {
+    console.error('Error getting lesson:', error);
+    throw error;
+  }
+}
