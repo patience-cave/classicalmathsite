@@ -669,6 +669,7 @@
                 let currentChapter = null;
                 let currentLessonIndex = -1;
                 let totalLessons = 0;
+                let currentLesson = null;
                 
                 for (const [chapter, lessons] of Object.entries(course)) {
                     const lessonIndex = lessons.findIndex(lesson => lesson.file === lessonId);
@@ -676,7 +677,8 @@
                         currentChapter = chapter;
                         currentLessonIndex = lessonIndex;
                         totalLessons = lessons.length;
-                        console.log('Found lesson:', lessons[lessonIndex]);
+                        currentLesson = lessons[lessonIndex];
+                        console.log('Found lesson:', currentLesson);
                         break;
                     }
                 }
@@ -686,36 +688,8 @@
                     lessonContent.classList.add('loaded');
                     return;
                 }
-                
-                // Update lesson progress
-                lessonProgress.textContent = `${currentLessonIndex + 1}/${totalLessons}`;
-                
-                // Calculate progress percentage
-                const progress = ((currentLessonIndex + 1) / totalLessons) * 100;
-                const oldProgress = updateProgress(progress);
-                progressBar.style.width = oldProgress + '%';
-                setTimeout(() => {
-                    progressBar.style.width = progress + '%';
-                }, 100);
-                // Load lesson content
-                const content = await lesson(lessonId);
-                
-                if (content == null) {
-                    lessonContent.innerHTML = '<p class="text-center text-gray-600">This page is empty.</p>';
-                    lessonContent.classList.add('loaded');
-                } else {
-                    // The API returns the HTML content as a string
-                    lessonContent.innerHTML = content;
-                }
-                
-                // Update lesson metadata
-                currentLesson = course[currentChapter][currentLessonIndex]
-                lessonType.textContent = currentLesson.type;
-                lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    currentLesson.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                }`;
-                
-                // Add background image if lesson has bg property
+
+                // Set up background image immediately after getting course data
                 const existingBg = document.querySelector('.background-image');
                 if (existingBg) {
                     existingBg.remove();
@@ -724,7 +698,6 @@
                     console.log('Adding background image:', currentLesson.bg);
                     const bgDiv = document.createElement('div');
                     bgDiv.className = 'background-image';
-                    // Use relative path instead of absolute path
                     const bgUrl = `images/${currentLesson.bg}`;
                     bgDiv.style.backgroundImage = `url('${bgUrl}')`;
                     // Add inline styles for debugging
@@ -738,109 +711,122 @@
                     bgDiv.style.backgroundRepeat = 'no-repeat';
                     bgDiv.style.opacity = '0.15';
                     bgDiv.style.zIndex = '-1';
-                    // Add to the root element instead of body
                     document.documentElement.appendChild(bgDiv);
                     console.log('Background div added with URL:', bgUrl);
-                    // Verify the image loads
-                    const img = new Image();
-                    img.onload = () => console.log('Background image loaded successfully');
-                    img.onerror = (err) => console.error('Background image failed to load:', err);
-                    img.src = bgUrl;
                 }
                 
-                // Navigation functions
-                function getNextLessonLink() {
-                    // Check for next lesson in current chapter
-                    if (currentLessonIndex < course[currentChapter].length - 1) {
-                        const nextLesson = course[currentChapter][currentLessonIndex + 1];
-                        return `lessons.html?file=${nextLesson.file}`;
-                    }
-                    
-                    // Check for next chapter
-                    const chapters = Object.keys(course);
-                    const currentChapterIndex = chapters.indexOf(currentChapter);
-                    if (currentChapterIndex < chapters.length - 1) {
-                        const nextChapter = chapters[currentChapterIndex + 1];
-                        const nextLesson = course[nextChapter][0];
-                        return `lessons.html?file=${nextLesson.file}`;
-                    }
-                    
-                    return null;
-                }
-
-                function getPreviousLessonLink() {
-                    if (currentLessonIndex > 0) {
-                        const prevLesson = course[currentChapter][currentLessonIndex - 1];
-                        return `lessons.html?file=${prevLesson.file}`;
-                    }
-                    return null;
-                }
-
-                // Update navigation buttons
-                const prevLink = getPreviousLessonLink();
-                if (prevLink) {
-                    document.getElementById('prevLesson').onclick = () => {
-                        const link = getPreviousLessonLink();
-                        window.location.href = link;
-                    };
-                } else {
-                    document.getElementById('prevLesson').style.display = 'none';
-                }
-
-                const nextButton = document.getElementById('nextLesson');
-                const nextButtonFooter = document.getElementById('nextLessonFooter');
-                const nextLink = getNextLessonLink();
-
-                if (nextLink) {
-                    // Determine if it's next lesson or next chapter
-                    const isNextChapter = currentLessonIndex === course[currentChapter].length - 1;
-                    const buttonHtml = `
-                        ${isNextChapter ? 'Next Chapter' : 'Next Lesson'}
-                        <svg class="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    `;
-                    nextButton.innerHTML = buttonHtml;
-                    nextButtonFooter.innerHTML = buttonHtml;
-                    
-                    nextButton.onclick = () => {
-                        const link = getNextLessonLink();
-                        window.location.href = link;
-                    };
-                    
-                    nextButtonFooter.onclick = () => {
-                        const link = getNextLessonLink();
-                        window.location.href = link;
-                    };
-
-                    // Also add addEventListener as a backup
-                    nextButton.addEventListener('click', (e) => {
-                        const link = getNextLessonLink();
-                        window.location.href = link;
-                    });
-
-                    nextButtonFooter.addEventListener('click', (e) => {
-                        const link = getNextLessonLink();
-                        window.location.href = link;
-                    });
-                } else {
-                    // Last lesson of last chapter
-                    nextButton.innerHTML = `
-                        <div class="text-center">
-                            <p class="text-lg font-medium text-gray-900">Congratulations! You've completed the course!</p>
-                            <a href="course.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                Return to Course Overview
-                            </a>
-                        </div>
-                    `;
-                    nextButtonFooter.style.display = 'none';
-                }
+                // Update lesson progress
+                lessonProgress.textContent = `${currentLessonIndex + 1}/${totalLessons}`;
                 
-                lessonContent.classList.add('loaded');
+                // Calculate progress percentage
+                const progress = ((currentLessonIndex + 1) / totalLessons) * 100;
+                const oldProgress = updateProgress(progress);
+                progressBar.style.width = oldProgress + '%';
+                setTimeout(() => {
+                    progressBar.style.width = progress + '%';
+                }, 100);
+
+                // Update lesson metadata
+                lessonType.textContent = currentLesson.type;
+                lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    currentLesson.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                }`;
+
+                // Load lesson content asynchronously
+                lesson(lessonId).then(content => {
+                    if (content == null) {
+                        lessonContent.innerHTML = '<p class="text-center text-gray-600">This page is empty.</p>';
+                    } else {
+                        lessonContent.innerHTML = content;
+                    }
+                    lessonContent.classList.add('loaded');
+                }).catch(error => {
+                    console.error('Error loading lesson content:', error);
+                    lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
+                    lessonContent.classList.add('loaded');
+                });
+
+                // Set up navigation
+                setupNavigation(course, currentChapter, currentLessonIndex);
             } catch (error) {
-                console.error('Error loading lesson:', error);
+                console.error('Error in loadLessonContent:', error);
                 lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
                 lessonContent.classList.add('loaded');
+            }
+        }
+
+        // Helper function for navigation setup
+        function setupNavigation(course, currentChapter, currentLessonIndex) {
+            function getNextLessonLink() {
+                // Check for next lesson in current chapter
+                if (currentLessonIndex < course[currentChapter].length - 1) {
+                    const nextLesson = course[currentChapter][currentLessonIndex + 1];
+                    return `lessons.html?file=${nextLesson.file}`;
+                }
+                
+                // Check for next chapter
+                const chapters = Object.keys(course);
+                const currentChapterIndex = chapters.indexOf(currentChapter);
+                if (currentChapterIndex < chapters.length - 1) {
+                    const nextChapter = chapters[currentChapterIndex + 1];
+                    const nextLesson = course[nextChapter][0];
+                    return `lessons.html?file=${nextLesson.file}`;
+                }
+                
+                return null;
+            }
+
+            function getPreviousLessonLink() {
+                if (currentLessonIndex > 0) {
+                    const prevLesson = course[currentChapter][currentLessonIndex - 1];
+                    return `lessons.html?file=${prevLesson.file}`;
+                }
+                return null;
+            }
+
+            // Update navigation buttons
+            const prevLink = getPreviousLessonLink();
+            if (prevLink) {
+                document.getElementById('prevLesson').onclick = () => {
+                    window.location.href = prevLink;
+                };
+            } else {
+                document.getElementById('prevLesson').style.display = 'none';
+            }
+
+            const nextButton = document.getElementById('nextLesson');
+            const nextButtonFooter = document.getElementById('nextLessonFooter');
+            const nextLink = getNextLessonLink();
+
+            if (nextLink) {
+                // Determine if it's next lesson or next chapter
+                const isNextChapter = currentLessonIndex === course[currentChapter].length - 1;
+                const buttonHtml = `
+                    ${isNextChapter ? 'Next Chapter' : 'Next Lesson'}
+                    <svg class="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                `;
+                nextButton.innerHTML = buttonHtml;
+                nextButtonFooter.innerHTML = buttonHtml;
+                
+                const clickHandler = () => {
+                    window.location.href = nextLink;
+                };
+                
+                nextButton.onclick = clickHandler;
+                nextButtonFooter.onclick = clickHandler;
+            } else {
+                // Last lesson of last chapter
+                nextButton.innerHTML = `
+                    <div class="text-center">
+                        <p class="text-lg font-medium text-gray-900">Congratulations! You've completed the course!</p>
+                        <a href="course.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Return to Course Overview
+                        </a>
+                    </div>
+                `;
+                nextButtonFooter.style.display = 'none';
             }
         }
     </script>
