@@ -4,15 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Testing</title>
-  <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-functions.js"></script>
-</head>
-<body>
-  <h1>Testing</h1>
-  <button onclick="pingServer()">Ping Server</button>
-  <p id="response"></p>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
 
-  <script>
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDhuc1LsStEPg-ksXXgnflQ2tu0dl5syHA",
@@ -26,28 +22,39 @@
 
     // Initialize Firebase if we're on the production site
     if (window.location.hostname === 'classicalmath.org') {
-      firebase.initializeApp(firebaseConfig);
+      const app = initializeApp(firebaseConfig);
+      window.firebaseApp = app;
+      window.getFunctions = getFunctions;
+      window.httpsCallable = httpsCallable;
     }
+  </script>
+</head>
+<body>
+  <h1>Testing</h1>
+  <button onclick="pingServer()">Ping Server</button>
+  <p id="response"></p>
 
+  <script>
     async function pingServer() {
       const responseElement = document.getElementById('response');
       try {
         let response;
         if (window.location.hostname === 'classicalmath.org') {
           // Use Firebase Functions for production
-          const functions = firebase.functions();
-          const pingFunction = functions.httpsCallable('ping');
+          const functions = window.getFunctions(window.firebaseApp);
+          const pingFunction = window.httpsCallable(functions, 'ping');
           const result = await pingFunction();
           responseElement.textContent = `Response: ${result.data.message || result.data}`;
         } else {
           // Use fetch for local development
           response = await fetch('http://localhost:5001/classicalmath/us-central1/ping');
-          const data = await response.text(); // <-- changed from json() to text()
+          const data = await response.text();
           responseElement.textContent = `Response: ${data}`;
         }
       } catch (error) {
         responseElement.textContent = `Error: ${error.message}`;
       }
-    }  </script>
+    }
+  </script>
 </body>
 </html>
