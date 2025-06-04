@@ -7,7 +7,7 @@
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
+    import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
 
     // Firebase configuration
     const firebaseConfig = {
@@ -26,6 +26,15 @@
       window.firebaseApp = app;
       window.getFunctions = getFunctions;
       window.httpsCallable = httpsCallable;
+    } else {
+      // Initialize Firebase for localhost
+      const app = initializeApp(firebaseConfig);
+      const functions = getFunctions(app);
+      // Connect to local emulator
+      connectFunctionsEmulator(functions, "localhost", 5001);
+      window.firebaseApp = app;
+      window.getFunctions = getFunctions;
+      window.httpsCallable = httpsCallable;
     }
   </script>
 </head>
@@ -35,24 +44,22 @@
   <p id="response"></p>
 
   <script>
+    // Local ping method
+    function pingLocal() {
+      return "pong";
+    }
+
+    // Server ping method that calls the Firebase Cloud Function
     async function pingServer() {
-      const responseElement = document.getElementById('response');
       try {
-        let response;
-        if (window.location.hostname === 'classicalmath.org') {
-          // Use Firebase Functions for production
-          const functions = window.getFunctions(window.firebaseApp);
-          const pingFunction = window.httpsCallable(functions, 'ping');
-          const result = await pingFunction();
-          responseElement.textContent = `Response: ${result.data.message || result.data}`;
-        } else {
-          // Use fetch for local development
-          response = await fetch('http://localhost:5001/classicalmath/us-central1/ping');
-          const data = await response.text();
-          responseElement.textContent = `Response: ${data}`;
-        }
+        const functions = getFunctions(window.firebaseApp);
+        const pingFunction = httpsCallable(functions, 'ping');
+        const result = await pingFunction();
+        // Handle both emulator and production response formats
+        const message = result.data?.message || result.message || "pong!";
+        document.getElementById('response').textContent = message;
       } catch (error) {
-        responseElement.textContent = `Error: ${error.message}`;
+        document.getElementById('response').textContent = "Error: " + error.message;
       }
     }
   </script>
