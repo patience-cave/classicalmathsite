@@ -1,0 +1,28 @@
+{
+    "Chapter 1: The Beginning": [
+        {
+            "type": "Story",
+            "file": "thales.txt",
+            "name": "Thales",
+            "bg": "thales_bg.png"
+        },
+        {
+            "type": "Lesson",
+            "file": "lesson1.txt",
+            "name": "The Definition of Numbers",
+            "bg": "thales_bg.png"
+        },
+        {
+            "type": "Story",
+            "file": "anaximander.txt",
+            "name": "Anaximander"
+        }
+    ],
+    "Chapter 2: Early Greek Mathematics": [
+        {
+            "type": "Story",
+            "file": "pythagoras.txt",
+            "name": "Pythagoras"
+        }
+    ]
+} 
