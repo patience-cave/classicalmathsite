@@ -429,12 +429,12 @@
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                     <div class="flex justify-between items-center">
                         <div class="flex-1">
-                            <a href="index.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <button id="prevLessonTop" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                                 </svg>
-                                Back to Home
-                            </a>
+                                Previous
+                            </button>
                         </div>
                         <div class="flex-1 text-center">
                             <a href="course.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
@@ -880,13 +880,19 @@
             // Update navigation buttons
             const prevLink = getPreviousLessonLink();
             if (prevLink) {
-                document.getElementById('prevLesson').onclick = (e) => {
+                const prevButton = document.getElementById('prevLesson');
+                const prevButtonTop = document.getElementById('prevLessonTop');
+                const clickHandler = (e) => {
                     e.preventDefault();
                     navigateToLesson(prevLink);
                 };
-                document.getElementById('prevLesson').style.display = '';
+                prevButton.onclick = clickHandler;
+                prevButtonTop.onclick = clickHandler;
+                prevButton.style.display = '';
+                prevButtonTop.style.display = '';
             } else {
                 document.getElementById('prevLesson').style.display = 'none';
+                document.getElementById('prevLessonTop').style.display = 'none';
             }
 
             const nextButton = document.getElementById('nextLesson');
