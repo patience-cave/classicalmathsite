@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lessons - Classical Math</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        // Import our API module
+        import { getCurrentUser, signOut } from './js/api.js';
+        // Make functions available globally
+        window.getCurrentUser = getCurrentUser;
+        window.signOut = signOut;
+
+        // Check auth state on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await getCurrentUser();
+            updateUI(user);
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Merriweather', serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        h3 {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+        p {
+            text-align: justify;
+            margin-bottom: 1rem;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 2rem auto;
+        }
+        .button {
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button.complete {
+            background: #2196F3;
+        }
+        #lesson-content {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #lesson-content.loaded {
+            opacity: 1;
+        }
+        .navigation {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .divider {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        .divider-flat {
+            border-top: 1px solid #ccc;
+            width: 100%;
+        }
+        .divider-wavy {
+            position: relative;
+            height: 20px;
+            overflow: hidden;
+        }
+        .divider-wavy::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, transparent 50%, #ccc 50%, #ccc 100%);
+            background-size: 20px 2px;
+            transform: translateY(-50%);
+        }
+        .quiz-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .quiz-container.collapsed {
+            background: #d4edda;
+        }
+        .quiz-container.incorrect {
+            background: #cce5ff;
+        }
+        .quiz-question {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        .quiz-answers {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .quiz-answer {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.8rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .quiz-answer:hover {
+            background: #f0f0f0;
+            border-color: #ccc;
+        }
+        .quiz-answer.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .quiz-answer.incorrect {
+            background: #cce5ff;
+            border-color: #007bff;
+            color: #004085;
+        }
+        .answer-text {
+            transition: opacity 0.2s ease;
+        }
+        .answer-feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .answer-feedback.visible {
+            opacity: 1;
+        }
+        .answer-text.hidden {
+            opacity: 0;
+        }
+        .essay-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .essay-question {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        .essay-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Merriweather', serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        .essay-textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .essay-submit {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: block;
+            margin: 0 auto;
+            position: relative;
+            min-width: 120px;
+        }
+        .essay-submit:hover:not(:disabled) {
+            background: #45a049;
+        }
+        .essay-submit:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .essay-submit.loading {
+            color: transparent;
+        }
+        .essay-submit.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -13px 0 0 -13px;
+            border: 3px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transform-origin: center;
+        }
+        .essay-grade {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            display: none;
+        }
+        .essay-grade.visible {
+            display: block;
+        }
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 1rem auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+        }
+        .loading-spinner.visible {
+            display: block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            color: #333;
+        }
+        .centered-text {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        .quote-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: justify;
+            position: relative;
+            max-width: 80%;
+        }
+        .quote-text {
+            margin: 0;
+            padding: 0 1rem;
+        }
+        .quote-source {
+            display: none;
+            position: absolute;
+            bottom: -30px;
+            right: 0;
+            font-size: 0.9rem;
+            color: #666;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .quote-source.visible {
+            display: block;
+        }
+        .quote-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .quote-number:hover {
+            background: #ccc;
+        }
+        .audio-player-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f8f9fa;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .audio-player:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .play-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #007bff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .play-button:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        .play-button svg {
+            width: 20px;
+            height: 20px;
+        }
+        .progress-container {
+            width: 200px;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        .time-display {
+            font-size: 0.875rem;
+            color: #6c757d;
+            min-width: 80px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-xl font-semibold text-gray-800">Classical Math</a>
+                </div>
+                <div class="flex items-center">
+                    <div id="userStatus" class="text-gray-600 mr-4"></div>
+                    <div id="authButtons"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Lesson Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <!-- Lesson Header -->
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1">
+                        <a href="index.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Lesson Content -->
+            <div class="px-6 py-4">
+                <div class="flex flex-col items-center mb-4">
+                    <div class="w-full max-w-md bg-gray-200 rounded-full h-2.5 mb-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-1000 ease-in-out" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="lesson-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update UI based on user state
+        function updateUI(user) {
+            const userStatus = document.getElementById('userStatus');
+            const authButtons = document.getElementById('authButtons');
+            
+            if (user) {
+                userStatus.textContent = `Welcome ${user.email}`;
+                authButtons.innerHTML = `
+                    <button onclick="handleSignOut()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">Sign Out</button>
+                `;
+            } else {
+                userStatus.textContent = '';
+                authButtons.innerHTML = `
+                    <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Sign In</button>
+                `;
+            }
+        }
+
+        // Handle sign out
+        async function handleSignOut() {
+            try {
+                await signOut();
+                updateUI(null);
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        }
+
+        // Store progress in localStorage
+        function updateProgress(newProgress) {
+            const oldProgress = localStorage.getItem('lessonProgress') || 0;
+            localStorage.setItem('lessonProgress', newProgress);
+            return oldProgress;
+        }
+
+        const baseApiUrl = "https://api-6zbinsbuqq-uc.a.run.app";
+        async function grade(answer, user_input) {
+            const response = await fetch(`${baseApiUrl}/grade`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ answer, user_input: user_input })
+            });
+            const result = await response.json();
+            return result['response']['out_of_ten'];
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        async function submitEssay(button, correctAnswer) {
+            const container = button.closest('.essay-container');
+            const textarea = container.querySelector('.essay-textarea');
+            const gradeDisplay = container.querySelector('.essay-grade');
+            const userInput = textarea.value.trim();
+            if (!userInput) return;
+            button.classList.add('loading');
+            button.disabled = true;
+            try {
+                const score = await grade(correctAnswer, userInput);
+                gradeDisplay.textContent = `Grade: ${score}/10`;
+                gradeDisplay.classList.add('visible');
+                button.textContent = 'Resubmit';
+                textarea.dataset.lastSubmitted = userInput;
+                textarea.addEventListener('input', function() {
+                    button.disabled = this.value.trim() === this.dataset.lastSubmitted;
+                });
+            } catch (error) {
+                console.error('Error grading essay:', error);
+                gradeDisplay.textContent = 'Error grading essay. Please try again.';
+                gradeDisplay.classList.add('visible');
+            } finally {
+                button.classList.remove('loading');
+                button.disabled = false;
+            }
+        }
+
+        function checkAnswer(element, selectedAnswer, correctAnswer) {
+            const isCorrect = selectedAnswer === correctAnswer;
+            const answerText = element.querySelector('.answer-text');
+            const feedback = element.querySelector('.answer-feedback');
+            const allAnswers = element.parentElement.children;
+            for (let answer of allAnswers) {
+                if (answer !== element) {
+                    answer.classList.remove('correct', 'incorrect');
+                    answer.querySelector('.answer-text').classList.remove('hidden');
+                    answer.querySelector('.answer-feedback').classList.remove('visible');
+                }
+            }
+            if (element.classList.contains('correct') || element.classList.contains('incorrect')) {
+                element.classList.remove('correct', 'incorrect');
+                answerText.classList.remove('hidden');
+                feedback.classList.remove('visible');
+            } else {
+                element.classList.add(isCorrect ? 'correct' : 'incorrect');
+                answerText.classList.add('hidden');
+                feedback.classList.add('visible');
+            }
+        }
+
+        function toggleSource(element) {
+            const source = element.parentElement.nextElementSibling;
+            source.classList.toggle('visible');
+        }
+
+        function toggleAudio(button) {
+            const player = button.closest('.audio-player');
+            const audio = player.querySelector('audio');
+            const progressBar = player.querySelector('.progress-bar');
+            const timeDisplay = player.querySelector('.time-display');
+            const svg = button.querySelector('svg');
+            if (audio.paused) {
+                audio.play();
+                svg.innerHTML = `
+                    <circle cx="12" cy="12" r="10"/>
+                    <rect x="8" y="8" width="3" height="8" rx="1"/>
+                    <rect x="13" y="8" width="3" height="8" rx="1"/>
+                `;
+                audio.addEventListener('timeupdate', () => {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    const currentMinutes = Math.floor(audio.currentTime / 60);
+                    const currentSeconds = Math.floor(audio.currentTime % 60);
+                    const durationMinutes = Math.floor(audio.duration / 60);
+                    const durationSeconds = Math.floor(audio.duration % 60);
+                    timeDisplay.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${durationMinutes}:${durationSeconds.toString().padStart(2, '0')}`;
+                });
+                audio.addEventListener('ended', () => {
+                    svg.innerHTML = `
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M10 8l6 4-6 4V8z"/>
+                    `;
+                    progressBar.style.width = '0%';
+                    timeDisplay.textContent = '0:00 / 0:00';
+                });
+            } else {
+                audio.pause();
+                svg.innerHTML = `
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M10 8l6 4-6 4V8z"/>
+                `;
+            }
+        }
+
+        // Initialize progress bar
+        const progressBar = document.getElementById('progress-bar');
+        const newProgress = 0;
+        const oldProgress = updateProgress(newProgress);
+        progressBar.style.width = oldProgress + '%';
+        setTimeout(() => {
+            progressBar.style.width = newProgress + '%';
+        }, 100);
+    </script>
+</body>
+</html> 
