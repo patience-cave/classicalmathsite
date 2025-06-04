@@ -1,5 +1,6 @@
 // Import Firebase SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-functions.js";
 import { 
   getAuth, 
   onAuthStateChanged,
@@ -18,15 +19,34 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+let app;
+let auth;
+let functions;
+
+function initializeFirebase() {
+  if (!app) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    functions = getFunctions(app);
+    
+    // Connect to emulator in development
+    if (window.location.hostname !== 'classicalmath.org') {
+      connectFunctionsEmulator(functions, "localhost", 5001);
+    }
+  }
+  return { app, auth, functions };
+}
+
+// Initialize Firebase when the module is imported
+const { app: firebaseApp, auth: firebaseAuth, functions: firebaseFunctions } = initializeFirebase();
 
 // API Functions
 export async function pingServer() {
   try {
-    const response = await fetch('/api/ping');
-    const data = await response.json();
-    return data.message;
+    const pingFunction = httpsCallable(firebaseFunctions, 'ping');
+    const result = await pingFunction();
+    console.log('Full response:', result);
+    return result.data;
   } catch (error) {
     console.error('Error pinging server:', error);
     throw error;
@@ -36,7 +56,7 @@ export async function pingServer() {
 // Get current user
 export function getCurrentUser() {
   return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, 
+    const unsubscribe = onAuthStateChanged(firebaseAuth, 
       (user) => {
         unsubscribe();
         resolve(user);
@@ -52,9 +72,9 @@ export function getCurrentUser() {
 // Sign out function
 export async function signOut() {
   try {
-    await firebaseSignOut(auth);
+    await firebaseSignOut(firebaseAuth);
   } catch (error) {
     console.error('Error signing out:', error);
     throw error;
   }
-} 
+}
