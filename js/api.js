@@ -1,6 +1,10 @@
 // Import Firebase SDKs
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged,
+  signOut as firebaseSignOut
+} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -13,36 +17,44 @@ const firebaseConfig = {
   measurementId: "G-05K9M3VQTK"
 };
 
-// Initialize Firebase based on environment
-function initializeFirebase() {
-  if (window.location.hostname === 'classicalmath.org') {
-    const app = initializeApp(firebaseConfig);
-    window.firebaseApp = app;
-    window.getFunctions = getFunctions;
-    window.httpsCallable = httpsCallable;
-  } else {
-    const app = initializeApp(firebaseConfig);
-    const functions = getFunctions(app);
-    connectFunctionsEmulator(functions, "localhost", 5001);
-    window.firebaseApp = app;
-    window.getFunctions = getFunctions;
-    window.httpsCallable = httpsCallable;
-  }
-}
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 // API Functions
 export async function pingServer() {
   try {
-    const functions = getFunctions(window.firebaseApp);
-    const pingFunction = httpsCallable(functions, 'ping');
-    const result = await pingFunction();
-    console.log('Full response:', result);
-    return result.data;
+    const response = await fetch('/api/ping');
+    const data = await response.json();
+    return data.message;
   } catch (error) {
-    console.error('Ping error:', error);
+    console.error('Error pinging server:', error);
     throw error;
   }
 }
 
-// Initialize Firebase when the module is imported
-initializeFirebase(); 
+// Get current user
+export function getCurrentUser() {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, 
+      (user) => {
+        unsubscribe();
+        resolve(user);
+      },
+      (error) => {
+        unsubscribe();
+        reject(error);
+      }
+    );
+  });
+}
+
+// Sign out function
+export async function signOut() {
+  try {
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error('Error signing out:', error);
+    throw error;
+  }
+} 

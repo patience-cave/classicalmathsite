@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-sm w-full space-y-4">
+      <h2 class="text-2xl font-semibold text-center">Login with Email</h2>
+
+      <input
+        type="email"
+        id="email"
+        placeholder="Enter your email"
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+
+      <button
+        id="send-button"
+        onclick="sendLoginLink()"
+        class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
+      >
+        Send Login Link
+      </button>
+
+      <div class="text-center my-2">— or —</div>
+
+      <button
+        onclick="signInWithGoogle()"
+        class="w-full bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 py-2 rounded-lg transition flex items-center justify-center space-x-2"
+      >
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5" />
+        <span>Sign in with Google</span>
+      </button>
+
+      <p id="message" class="text-center text-sm text-gray-600 mt-2"></p>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+      import {
+        getAuth,
+        sendSignInLinkToEmail,
+        isSignInWithEmailLink,
+        signInWithEmailLink,
+        GoogleAuthProvider,
+        signInWithPopup,
+      } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDhuc1LsStEPg-ksXXgnflQ2tu0dl5syHA",
+        authDomain: "classicalmath.firebaseapp.com",
+        projectId: "classicalmath",
+        storageBucket: "classicalmath.firebasestorage.app",
+        messagingSenderId: "115442672639",
+        appId: "1:115442672639:web:ffd3308688abfcc5d63dca",
+        measurementId: "G-05K9M3VQTK"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+      // Redirect if user is already signed in
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // User is signed in, redirect to index page
+          window.location.href = "index.html";
+        }
+      });
+
+      const msg = document.getElementById("message");
+
+      window.sendLoginLink = async function () {
+        const email = document.getElementById("email").value;
+        const actionCodeSettings = {
+          url: window.location.href,
+          handleCodeInApp: true,
+        };
+
+        try {
+          await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+          window.localStorage.setItem("emailForSignIn", email);
+          msg.innerText = "📬 Please check your email!";
+          msg.classList.remove("text-red-500");
+          msg.classList.add("text-gray-600");
+        } catch (error) {
+          msg.innerText = error.message;
+          msg.classList.remove("text-gray-600");
+          msg.classList.add("text-red-500");
+          console.error(error);
+        }
+      };
+
+      window.signInWithGoogle = async function () {
+        const provider = new GoogleAuthProvider();
+        try {
+          await signInWithPopup(auth, provider);
+          msg.innerText = "🎉 Signed in with Google!";
+          msg.classList.remove("text-red-500");
+          msg.classList.add("text-gray-600");
+        } catch (error) {
+          msg.innerText = error.message;
+          msg.classList.remove("text-gray-600");
+          msg.classList.add("text-red-500");
+          console.error(error);
+        }
+      };
+
+      // Handle email link sign-in if user is returning via email
+      window.addEventListener("DOMContentLoaded", async () => {
+        if (isSignInWithEmailLink(auth, window.location.href)) {
+          let email = window.localStorage.getItem("emailForSignIn");
+          if (!email) {
+            email = window.prompt("Please provide your email for confirmation");
+          }
+
+          try {
+            const result = await signInWithEmailLink(auth, email, window.location.href);
+            window.localStorage.removeItem("emailForSignIn");
+            msg.innerText = `✅ Signed in as ${result.user.email}`;
+            msg.classList.remove("text-red-500");
+            msg.classList.add("text-gray-600");
+            console.log("Signed in user:", result.user);
+          } catch (error) {
+            msg.innerText = "Link is invalid or expired.";
+            msg.classList.remove("text-gray-600");
+            msg.classList.add("text-red-500");
+            console.error(error);
+          }
+        }
+      });
+    </script>
+  </body>
+</html> 

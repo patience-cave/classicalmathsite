@@ -3,18 +3,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Testing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classical Math</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
     // Import our API module
-    import { pingServer } from './js/api.js';
+    import { pingServer, getCurrentUser, signOut } from './js/api.js';
     // Make functions available globally
     window.pingServer = pingServer;
+    window.getCurrentUser = getCurrentUser;
+    window.signOut = signOut;
+
+    // Check auth state on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await getCurrentUser();
+      updateUI(user);
+    });
   </script>
 </head>
-<body>
-  <h1>Testing!</h1>
-  <button onclick="pingServer()">Ping Server</button>
-  <p id="response"></p>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold">Classical Math</h1>
+      <div id="userStatus" class="text-gray-600"></div>
+      <div id="authButtons">
+        <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Log In</button>
+      </div>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <button onclick="pingServer()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">Ping Server</button>
+      <p id="response" class="mt-4"></p>
+    </div>
+  </div>
 
   <script>
     // Update the button click handler to use the imported function
@@ -26,6 +47,35 @@
         document.getElementById('response').textContent = "Error: " + error.message;
       }
     }
+
+    // Update UI based on user state
+    function updateUI(user) {
+      const userStatus = document.getElementById('userStatus');
+      const authButtons = document.getElementById('authButtons');
+      
+      if (user) {
+        userStatus.textContent = `Welcome ${user.email}`;
+        authButtons.innerHTML = `
+          <button onclick="handleSignOut()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">Sign Out</button>
+        `;
+      } else {
+        userStatus.textContent = 'Not logged in';
+        authButtons.innerHTML = `
+          <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Log In</button>
+        `;
+      }
+    }
+
+    // Handle sign out
+    async function handleSignOut() {
+      try {
+        await signOut();
+        updateUI(null);
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    }
+
     // Update the button onclick to use the new handler
     document.querySelector('button').onclick = handlePing;
   </script>
