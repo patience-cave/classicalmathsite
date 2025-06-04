@@ -5,63 +5,29 @@
   <meta charset="UTF-8">
   <title>Testing</title>
   <script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
-
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDhuc1LsStEPg-ksXXgnflQ2tu0dl5syHA",
-      authDomain: "classicalmath.firebaseapp.com",
-      projectId: "classicalmath",
-      storageBucket: "classicalmath.firebasestorage.app",
-      messagingSenderId: "115442672639",
-      appId: "1:115442672639:web:ffd3308688abfcc5d63dca",
-      measurementId: "G-05K9M3VQTK"
-    };
-
-    // Initialize Firebase if we're on the production site
-    if (window.location.hostname === 'classicalmath.org') {
-      const app = initializeApp(firebaseConfig);
-      window.firebaseApp = app;
-      window.getFunctions = getFunctions;
-      window.httpsCallable = httpsCallable;
-    } else {
-      // Initialize Firebase for localhost
-      const app = initializeApp(firebaseConfig);
-      const functions = getFunctions(app);
-      // Connect to local emulator
-      connectFunctionsEmulator(functions, "localhost", 5001);
-      window.firebaseApp = app;
-      window.getFunctions = getFunctions;
-      window.httpsCallable = httpsCallable;
-    }
+    // Import our API module
+    import { pingServer } from './js/api.js';
+    // Make functions available globally
+    window.pingServer = pingServer;
   </script>
 </head>
 <body>
-  <h1>Testing!!!!!</h1>
+  <h1>Testing!</h1>
   <button onclick="pingServer()">Ping Server</button>
   <p id="response"></p>
 
   <script>
-    // Local ping method
-    function pingLocal() {
-      return "pong";
-    }
-
-    // Server ping method that calls the Firebase Cloud Function
-    async function pingServer() {
+    // Update the button click handler to use the imported function
+    async function handlePing() {
       try {
-        const functions = getFunctions(window.firebaseApp);
-        const pingFunction = httpsCallable(functions, 'ping');
-        const result = await pingFunction();
-        console.log('Full response:', result); // Debug log
-        document.getElementById('response').textContent = result.data;
+        const result = await pingServer();
+        document.getElementById('response').textContent = result;
       } catch (error) {
-        console.error('Ping error:', error); // Debug log
         document.getElementById('response').textContent = "Error: " + error.message;
       }
     }
+    // Update the button onclick to use the new handler
+    document.querySelector('button').onclick = handlePing;
   </script>
 </body>
 </html>
