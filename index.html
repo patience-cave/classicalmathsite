@@ -55,9 +55,8 @@
         const functions = getFunctions(window.firebaseApp);
         const pingFunction = httpsCallable(functions, 'ping');
         const result = await pingFunction();
-        // Handle both emulator and production response formats
-        const message = result.data?.message || result.message || "pong!";
-        document.getElementById('response').textContent = message;
+        // The backend returns { message: "pong?" }
+        document.getElementById('response').textContent = result.data.message;
       } catch (error) {
         document.getElementById('response').textContent = "Error: " + error.message;
       }
