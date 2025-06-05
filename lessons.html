@@ -676,14 +676,15 @@
                 let gradeText = '';
                 let statusClass = '';
                 
+                // ${score}/10
                 if (score === 10) {
-                    gradeText = `Perfect! ${score}/10`;
+                    gradeText = `Perfect!`;
                     statusClass = 'perfect';
                 } else if (score >= 9) {
-                    gradeText = `Excellent! ${score}/10`;
+                    gradeText = `Excellent!`;
                     statusClass = 'excellent';
                 } else if (score >= 7) {
-                    gradeText = `Tell me more! ${score}/10`;
+                    gradeText = `Tell me more!`; 
                     statusClass = 'excellent';
                 } else if (score >= 5) {
                     gradeText = `Almost! Please explain!`;
