@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Classical Math</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { getCurrentUser, signOut } from './js/api.js?v=35';
+        window.getCurrentUser = getCurrentUser;
+        window.signOut = signOut;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await getCurrentUser();
+            updateUI(user);
+        });
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-xl font-semibold text-gray-800">Classical Math</a>
+                </div>
+                <div class="flex items-center">
+                    <div id="userStatus" class="text-gray-600 mr-4"></div>
+                    <div id="authButtons"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Settings Content -->
+    <div class="pt-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <h1 class="text-2xl font-semibold text-gray-800">Account Settings</h1>
+                </div>
+
+                <div class="p-6">
+                    <form id="profileForm" class="space-y-6">
+                        <!-- Profile Section -->
+                        <div class="space-y-4">
+                            <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
+                            
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                                    <input type="text" id="firstName" name="firstName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                                    <input type="text" id="lastName" name="lastName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="email" name="email" readonly class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm">
+                            </div>
+                        </div>
+
+                        <!-- Preferences Section -->
+                        <div class="space-y-4">
+                            <h2 class="text-lg font-medium text-gray-900">Preferences</h2>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email Notifications</label>
+                                <div class="mt-2 space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="emailUpdates" name="emailUpdates" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <label for="emailUpdates" class="ml-2 block text-sm text-gray-700">Receive email updates about new lessons</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="emailReminders" name="emailReminders" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <label for="emailReminders" class="ml-2 block text-sm text-gray-700">Receive reminder emails</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Button -->
+                        <div class="flex justify-end">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Danger Zone -->
+                    <div class="mt-8 pt-8 border-t border-gray-200">
+                        <h2 class="text-lg font-medium text-red-600">Danger Zone</h2>
+                        <div class="mt-4">
+                            <button onclick="handleSignOut()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update UI based on user state
+        function updateUI(user) {
+            const userStatus = document.getElementById('userStatus');
+            const authButtons = document.getElementById('authButtons');
+            const emailInput = document.getElementById('email');
+            
+            if (user) {
+                userStatus.textContent = `Welcome ${user.email}`;
+                emailInput.value = user.email;
+                authButtons.innerHTML = `
+                    <a href="index.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Home</a>
+                `;
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Handle sign out
+        async function handleSignOut() {
+            try {
+                await signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Here you would typically save the form data to your backend
+            // For now, we'll just show a success message
+            alert('Settings saved successfully!');
+        });
+    </script>
+</body>
+</html> 
