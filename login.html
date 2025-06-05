@@ -66,11 +66,15 @@
 
       import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
+      // Get return URL from query parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('returnUrl') || 'index.html';
+
       // Redirect if user is already signed in
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          // User is signed in, redirect to index page
-          window.location.href = "index.html";
+          // User is signed in, redirect to return URL
+          window.location.href = returnUrl;
         }
       });
 
@@ -86,6 +90,7 @@
         try {
           await sendSignInLinkToEmail(auth, email, actionCodeSettings);
           window.localStorage.setItem("emailForSignIn", email);
+          window.localStorage.setItem("returnUrl", returnUrl);
           msg.innerText = "📬 Please check your email!";
           msg.classList.remove("text-red-500");
           msg.classList.add("text-gray-600");
@@ -104,6 +109,8 @@
           msg.innerText = "🎉 Signed in with Google!";
           msg.classList.remove("text-red-500");
           msg.classList.add("text-gray-600");
+          // Redirect to return URL after successful Google sign-in
+          window.location.href = returnUrl;
         } catch (error) {
           msg.innerText = error.message;
           msg.classList.remove("text-gray-600");
@@ -123,10 +130,14 @@
           try {
             const result = await signInWithEmailLink(auth, email, window.location.href);
             window.localStorage.removeItem("emailForSignIn");
+            const savedReturnUrl = window.localStorage.getItem("returnUrl") || returnUrl;
+            window.localStorage.removeItem("returnUrl");
             msg.innerText = `✅ Signed in as ${result.user.email}`;
             msg.classList.remove("text-red-500");
             msg.classList.add("text-gray-600");
             console.log("Signed in user:", result.user);
+            // Redirect to return URL after successful email sign-in
+            window.location.href = savedReturnUrl;
           } catch (error) {
             msg.innerText = "Link is invalid or expired.";
             msg.classList.remove("text-gray-600");

@@ -502,9 +502,70 @@
         .prev-button.visible {
             opacity: 1;
         }
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1a202c;
+        }
+
+        .modal-text {
+            color: #4a5568;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Sign Up Modal -->
+    <div id="signUpModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Sign up to continue!</h2>
+            <p class="modal-text">Create an account to access all lessons and track your progress.</p>
+            <div class="modal-buttons">
+                <button onclick="redirectToLogin()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Sign Up
+                </button>
+                <button onclick="closeSignUpModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Navigation Bar -->
     <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -835,6 +896,12 @@
                     return;
                 }
 
+                // Check if user is authenticated for non-first lessons
+                const user = await getCurrentUser();
+                if (!user && currentLessonIndex > 0) {
+                    showSignUpModal();
+                }
+
                 // Set up background image immediately after getting course data
                 const existingBg = document.querySelector('.background-image');
                 if (existingBg) {
@@ -949,6 +1016,12 @@
 
             async function navigateToLesson(lessonId) {
                 if (!lessonId) return;
+                
+                const user = await getCurrentUser();
+                if (!user) {
+                    showSignUpModal();
+                    return;
+                }
                 
                 // Update URL without page reload
                 const newUrl = `lessons.html?file=${lessonId}`;
@@ -1145,6 +1218,20 @@
                 `;
                 nextButtonFooter.style.display = 'none';
             }
+        }
+
+        // Modal functions
+        function showSignUpModal() {
+            document.getElementById('signUpModal').classList.add('active');
+        }
+
+        function closeSignUpModal() {
+            document.getElementById('signUpModal').classList.remove('active');
+        }
+
+        function redirectToLogin() {
+            const currentUrl = window.location.href;
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(currentUrl)}`;
         }
     </script>
 </body>
