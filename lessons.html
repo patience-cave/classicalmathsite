@@ -861,6 +861,9 @@
                 const newUrl = `lessons.html?file=${lessonId}`;
                 history.pushState({ lessonId }, '', newUrl);
                 
+                // Scroll to top of page
+                window.scrollTo(0, 0);
+                
                 // Start transition
                 const lessonContent = document.getElementById('lesson-content');
                 const lessonCard = document.getElementById('lesson-card');
