@@ -226,6 +226,42 @@
             padding: 2rem;
             margin: 2rem 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .essay-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: #e9ecef;
+            color: #495057;
+        }
+        .essay-status.perfect {
+            background: #d4edda;
+            color: #155724;
+        }
+        .essay-status.excellent {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .essay-status.good {
+            background: #e2f3ff;
+            color: #0056b3;
+        }
+        .essay-status.fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .essay-status.poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .essay-status.error {
+            background: #f8d7da;
+            color: #721c24;
         }
         .essay-question {
             font-size: 1.2rem;
@@ -297,6 +333,21 @@
         }
         .essay-grade.visible {
             display: block;
+        }
+        .essay-grade.perfect {
+            color: #28a745;
+        }
+        .essay-grade.excellent {
+            color: #17a2b8;
+        }
+        .essay-grade.good {
+            color: #007bff;
+        }
+        .essay-grade.fair {
+            color: #ffc107;
+        }
+        .essay-grade.poor {
+            color: #dc3545;
         }
         .loading-spinner {
             display: none;
@@ -608,24 +659,48 @@
         async function submitEssay(button, correctAnswer) {
             const container = button.closest('.essay-container');
             const textarea = container.querySelector('.essay-textarea');
-            const gradeDisplay = container.querySelector('.essay-grade');
+            const statusDisplay = container.querySelector('.essay-status');
             const userInput = textarea.value.trim();
             if (!userInput) return;
             button.classList.add('loading');
             button.disabled = true;
             try {
                 const score = await grade(correctAnswer, userInput);
-                gradeDisplay.textContent = `Grade: ${score}/10`;
-                gradeDisplay.classList.add('visible');
+                let gradeText = '';
+                let statusClass = '';
+                
+                if (score === 10) {
+                    gradeText = `Perfect! ${score}/10`;
+                    statusClass = 'perfect';
+                } else if (score >= 9) {
+                    gradeText = `Excellent! ${score}/10`;
+                    statusClass = 'excellent';
+                } else if (score >= 7) {
+                    gradeText = `Tell me more! ${score}/10`;
+                    statusClass = 'excellent';
+                } else if (score >= 5) {
+                    gradeText = `Almost! Please explain!`;
+                    statusClass = 'excellent';
+                } else {
+                    gradeText = `Interesting perspective! Try again?`;
+                    statusClass = 'excellent';
+                }
+                
+                statusDisplay.textContent = gradeText;
+                statusDisplay.className = `essay-status ${statusClass}`;
                 button.textContent = 'Resubmit';
                 textarea.dataset.lastSubmitted = userInput;
                 textarea.addEventListener('input', function() {
                     button.disabled = this.value.trim() === this.dataset.lastSubmitted;
+                    if (this.value.trim() !== this.dataset.lastSubmitted) {
+                        statusDisplay.textContent = 'Unanswered';
+                        statusDisplay.className = 'essay-status';
+                    }
                 });
             } catch (error) {
                 console.error('Error grading essay:', error);
-                gradeDisplay.textContent = 'Error grading essay. Please try again.';
-                gradeDisplay.classList.add('visible');
+                statusDisplay.textContent = 'Error grading essay';
+                statusDisplay.className = 'essay-status error';
             } finally {
                 button.classList.remove('loading');
                 button.disabled = false;
@@ -793,6 +868,13 @@
                         // Add lesson-element class to all direct children
                         Array.from(tempContainer.children).forEach(child => {
                             child.classList.add('lesson-element');
+                            // Add status blob to essay containers
+                            if (child.classList.contains('essay-container')) {
+                                const statusDiv = document.createElement('div');
+                                statusDiv.className = 'essay-status';
+                                statusDiv.textContent = 'Unanswered';
+                                child.insertBefore(statusDiv, child.firstChild);
+                            }
                         });
                         
                         // Clear and update the lesson content
@@ -947,6 +1029,13 @@
                         // Add lesson-element class to all direct children
                         Array.from(tempContainer.children).forEach(child => {
                             child.classList.add('lesson-element');
+                            // Add status blob to essay containers
+                            if (child.classList.contains('essay-container')) {
+                                const statusDiv = document.createElement('div');
+                                statusDiv.className = 'essay-status';
+                                statusDiv.textContent = 'Unanswered';
+                                child.insertBefore(statusDiv, child.firstChild);
+                            }
                         });
                         
                         // Clear and update the lesson content
