@@ -404,6 +404,13 @@
             min-width: 80px;
             text-align: center;
         }
+        .prev-button {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .prev-button.visible {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -430,7 +437,7 @@
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                     <div class="flex justify-between items-center">
                         <div class="flex-1">
-                            <button id="prevLessonTop" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <button id="prevLessonTop" class="prev-button inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                                 </svg>
@@ -475,7 +482,7 @@
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
                     <div class="flex justify-between items-center">
                         <div class="flex-1">
-                            <button id="prevLesson" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <button id="prevLesson" class="prev-button inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                                 </svg>
@@ -894,9 +901,21 @@
                 prevButtonTop.onclick = clickHandler;
                 prevButton.style.display = '';
                 prevButtonTop.style.display = '';
+                // Add fade in animation
+                setTimeout(() => {
+                    prevButton.classList.add('visible');
+                    prevButtonTop.classList.add('visible');
+                }, 50);
             } else {
-                document.getElementById('prevLesson').style.display = 'none';
-                document.getElementById('prevLessonTop').style.display = 'none';
+                const prevButton = document.getElementById('prevLesson');
+                const prevButtonTop = document.getElementById('prevLessonTop');
+                // Add fade out animation
+                prevButton.classList.remove('visible');
+                prevButtonTop.classList.remove('visible');
+                setTimeout(() => {
+                    prevButton.style.display = 'none';
+                    prevButtonTop.style.display = 'none';
+                }, 300); // Match the CSS transition duration
             }
 
             const nextButton = document.getElementById('nextLesson');
