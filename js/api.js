@@ -93,10 +93,114 @@ export async function lesson(lessonId) {
     console.log('Lesson function:', lessonFunction);
     const result = await lessonFunction({ lesson_file_name: lessonId });
     console.log('Result:', result);
-    return result.data;
+    return parseLessonContent(result.data);
   } catch (error) {
     //console.log('Error getting lesson:', error);
     //console.error('Error getting lesson:', error);
     return null;
   }
+}
+
+function parseLessonContent(text) {
+  let html = '';
+  const lines = text.split('\n');
+  function formatText(line) {
+      return line
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+  for (let line of lines) {
+      line = formatText(line);
+      if (line.startsWith('# ')) {
+          html += `<h1 class="text-4xl font-bold text-gray-900 mb-4">${line.substring(2)}</h1>`;
+      } else if (line.startsWith('### ')) {
+          html += `<h3>${line.substring(4)}</h3>`;
+      } else if (line.trim().startsWith('! center:')) {
+          const centeredText = line.substring(9).trim();
+          html += `<div class="centered-text">${centeredText}</div>`;
+      } else if (line.trim().startsWith('! image:')) {
+          const match = line.match(/! image: (.*) alt: (.*?)(?: size: (\d+)%)*$/);
+          if (match) {
+              const [_, imagePath, altText, size] = match;
+              const sizeStyle = size ? `width: ${size}%;` : 'width: 100%;';
+              html += `<img src="/images/${imagePath}" alt="${altText}" style="${sizeStyle}">`;
+          }
+      } else if (line.trim().startsWith('! quote:')) {
+          const quoteMatch = line.match(/! quote: (.*) source: (.*)/);
+          if (quoteMatch) {
+              const [_, quoteText, source] = quoteMatch;
+              window.quoteCounter = (window.quoteCounter || 0) + 1;
+              html += `
+                  <div class="quote-container">
+                      <p class="quote-text">${quoteText}<span class="quote-number" onclick="toggleSource(this)">${window.quoteCounter}</span></p>
+                      <div class="quote-source">${source}</div>
+                  </div>
+              `;
+          }
+      } else if (line.trim().startsWith('! speak:')) {
+          const audioFile = line.match(/! speak: (.*)/)[1];
+          html += `
+              <div class="audio-player-container">
+                  <div class="audio-player">
+                      <button class="play-button" onclick="toggleAudio(this)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="12" cy="12" r="10"/>
+                              <path d="M10 8l6 4-6 4V8z"/>
+                          </svg>
+                      </button>
+                      <div class="progress-container">
+                          <div class="progress-bar"></div>
+                      </div>
+                      <div class="time-display">0:00 / 0:00</div>
+                      <audio src="/speech/${audioFile}" preload="metadata"></audio>
+                  </div>
+              </div>
+          `;
+      } else if (line.trim().startsWith('! essay:')) {
+          const essayMatch = line.match(/! essay: (.*) answer: (.*)/);
+          if (essayMatch) {
+              const [_, question, answer] = essayMatch;
+              html += `
+                  <div class="essay-container">
+                      <div class="essay-question">${question}</div>
+                      <textarea class="essay-textarea" placeholder="Type your answer here..."></textarea>
+                      <div class="loading-spinner"></div>
+                      <button class="essay-submit" onclick="submitEssay(this, '${answer}')">Submit</button>
+                      <div class="essay-grade"></div>
+                  </div>
+              `;
+          }
+      } else if (line.trim().startsWith('! question:')) {
+          const questionMatch = line.match(/! question: (.*) a: (.*) b: (.*) c: (.*) d: (.*) e: (.*)/);
+          if (questionMatch) {
+              const [_, question, correctAnswer, ...otherAnswers] = questionMatch;
+              const allAnswers = [correctAnswer, ...otherAnswers];
+              const shuffledAnswers = shuffleArray([...allAnswers]);
+              html += `
+                  <div class="quiz-container">
+                      <div class="quiz-question">${question}</div>
+                      <div class="quiz-answers">
+                          ${shuffledAnswers.map((answer, index) => `
+                              <div class="quiz-answer" onclick="checkAnswer(this, '${answer}', '${correctAnswer}')">
+                                  <span class="answer-text">${answer}</span>
+                                  <div class="answer-feedback">
+                                      ${answer === correctAnswer ? 
+                                          '<svg class="checkmark" viewBox="0 0 24 24"><path d="M20 6L9 17L4 12"/></svg>Correct' : 
+                                          '<svg class="x-mark" viewBox="0 0 24 24"><path d="M6 6L18 18M6 18L18 6"/></svg>Not Quite'}
+                                  </div>
+                              </div>
+                          `).join('')}
+                      </div>
+                  </div>
+              `;
+          }
+      } else if (line.trim() === '---') {
+          html += '<div class="divider"><div class="divider-flat"></div></div>';
+      } else if (line.trim() === '~~~') {
+          html += '<div class="divider"><div class="divider-wavy"></div></div>';
+      } else {
+          html += `<p style="margin-bottom: 1.5rem;">${line}</p>`;
+      }
+  }
+  return html;
 }
