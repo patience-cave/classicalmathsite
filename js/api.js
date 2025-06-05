@@ -82,11 +82,21 @@ export async function signOut() {
 // Get lesson content
 export async function lesson(lessonId) {
   try {
-    const lessonFunction = httpsCallable(firebaseFunctions, 'lesson');
-    const result = await lessonFunction({ lessonId });
+
+    const pingFunction = httpsCallable(firebaseFunctions, 'ping');
+    const result = await pingFunction();
+    console.log('Full response:', result);
     return result.data;
+
+    // console.log('Getting lesson:', lessonId);
+    // const lessonFunction = httpsCallable(firebaseFunctions, 'lessons');
+    // console.log('Lesson function:', lessonFunction);
+    // const result = await lessonFunction({ lessonId });
+    // console.log('Result:', result);
+    // return result.data;
   } catch (error) {
-    console.error('Error getting lesson:', error);
+    //console.log('Error getting lesson:', error);
+    //console.error('Error getting lesson:', error);
     return null;
   }
 }
