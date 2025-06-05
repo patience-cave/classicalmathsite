@@ -31,7 +31,7 @@ function initializeFirebase() {
     
     // Connect to emulator in development
     if (window.location.hostname !== 'classicalmath.org') {
-      connectFunctionsEmulator(functions, "localhost", 5001);
+      connectFunctionsEmulator(functions, "localhost", 5002);
     }
   }
   return { app, auth, functions };
@@ -83,17 +83,17 @@ export async function signOut() {
 export async function lesson(lessonId) {
   try {
 
-    const pingFunction = httpsCallable(firebaseFunctions, 'ping');
-    const result = await pingFunction();
-    console.log('Full response:', result);
-    return result.data;
-
-    // console.log('Getting lesson:', lessonId);
-    // const lessonFunction = httpsCallable(firebaseFunctions, 'lessons');
-    // console.log('Lesson function:', lessonFunction);
-    // const result = await lessonFunction({ lessonId });
-    // console.log('Result:', result);
+    // const pingFunction = httpsCallable(firebaseFunctions, 'ping');
+    // const result = await pingFunction();
+    // console.log('Full response:', result);
     // return result.data;
+
+    console.log('Getting lesson:', lessonId);
+    const lessonFunction = httpsCallable(firebaseFunctions, 'lessons');
+    console.log('Lesson function:', lessonFunction);
+    const result = await lessonFunction({ lesson_file_name: lessonId });
+    console.log('Result:', result);
+    return result.data;
   } catch (error) {
     //console.log('Error getting lesson:', error);
     //console.error('Error getting lesson:', error);
