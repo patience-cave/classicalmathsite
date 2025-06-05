@@ -75,12 +75,52 @@
         .button.complete {
             background: #2196F3;
         }
-        #lesson-content {
+        .lesson-content {
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.25s ease-in-out;
         }
-        #lesson-content.loaded {
+        .lesson-content.loaded {
             opacity: 1;
+        }
+        .lesson-card {
+            transition: all 0.25s ease-in-out;
+            transform-origin: center;
+            overflow: hidden;
+        }
+        .lesson-card.transitioning {
+            transform: scale(0.98);
+        }
+        .lesson-card.loaded {
+            transform: scale(1);
+        }
+        .lesson-element {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+        }
+        .lesson-element.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeOutDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
         }
         .navigation {
             text-align: center;
@@ -475,7 +515,9 @@
                             <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-1000 ease-in-out" style="width: 0%"></div>
                         </div>
                     </div>
-                    <div id="lesson-content"></div>
+                    <div id="lesson-card" class="lesson-card">
+                        <div id="lesson-content" class="lesson-content"></div>
+                    </div>
                 </div>
 
                 <!-- Navigation Footer -->
@@ -660,6 +702,7 @@
         // Load lesson content from API
         async function loadLessonContent() {
             const lessonContent = document.getElementById('lesson-content');
+            const lessonCard = document.getElementById('lesson-card');
             const lessonType = document.getElementById('lessonType');
             const lessonProgress = document.getElementById('lessonProgress');
             const progressBar = document.getElementById('progress-bar');
@@ -717,19 +760,7 @@
                     bgDiv.className = 'background-image';
                     const bgUrl = `images/${currentLesson.bg}`;
                     bgDiv.style.backgroundImage = `url('${bgUrl}')`;
-                    // Add inline styles for debugging
-                    bgDiv.style.position = 'fixed';
-                    bgDiv.style.top = '0';
-                    bgDiv.style.left = '0';
-                    bgDiv.style.width = '100%';
-                    bgDiv.style.height = '100%';
-                    bgDiv.style.backgroundSize = 'cover';
-                    bgDiv.style.backgroundPosition = 'center';
-                    bgDiv.style.backgroundRepeat = 'no-repeat';
-                    bgDiv.style.opacity = '0.15';
-                    bgDiv.style.zIndex = '-1';
                     document.documentElement.appendChild(bgDiv);
-                    console.log('Background div added with URL:', bgUrl);
                 }
                 
                 // Update lesson progress
@@ -755,13 +786,33 @@
                     if (content == null) {
                         lessonContent.innerHTML = '<p class="text-center text-gray-600">This page is empty.</p>';
                     } else {
-                        lessonContent.innerHTML = content;
+                        // Create a temporary container to parse the content
+                        const tempContainer = document.createElement('div');
+                        tempContainer.innerHTML = content;
+                        
+                        // Add lesson-element class to all direct children
+                        Array.from(tempContainer.children).forEach(child => {
+                            child.classList.add('lesson-element');
+                        });
+                        
+                        // Clear and update the lesson content
+                        lessonContent.innerHTML = tempContainer.innerHTML;
+                        
+                        // Animate elements in sequence
+                        const elements = lessonContent.querySelectorAll('.lesson-element');
+                        elements.forEach((element, index) => {
+                            setTimeout(() => {
+                                element.classList.add('visible');
+                            }, index * 50); // 50ms delay between each element
+                        });
                     }
                     lessonContent.classList.add('loaded');
+                    lessonCard.classList.add('loaded');
                 }).catch(error => {
                     console.error('Error loading lesson content:', error);
                     lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
                     lessonContent.classList.add('loaded');
+                    lessonCard.classList.add('loaded');
                 });
 
                 // Set up navigation
@@ -770,6 +821,7 @@
                 console.error('Error in loadLessonContent:', error);
                 lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
                 lessonContent.classList.add('loaded');
+                lessonCard.classList.add('loaded');
             }
         }
 
@@ -803,17 +855,31 @@
             }
 
             async function navigateToLesson(lessonId) {
-
                 if (!lessonId) return;
                 
                 // Update URL without page reload
                 const newUrl = `lessons.html?file=${lessonId}`;
                 history.pushState({ lessonId }, '', newUrl);
                 
-                // Reset lesson content and show loading state
+                // Start transition
                 const lessonContent = document.getElementById('lesson-content');
+                const lessonCard = document.getElementById('lesson-card');
+                
+                // Remove loaded classes and add transitioning
                 lessonContent.classList.remove('loaded');
-                lessonContent.innerHTML = '<p class="text-center text-gray-600">Loading...</p>';
+                lessonCard.classList.remove('loaded');
+                lessonCard.classList.add('transitioning');
+                
+                // Fade out existing elements
+                const existingElements = lessonContent.querySelectorAll('.lesson-element');
+                existingElements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.classList.remove('visible');
+                    }, index * 25); // 25ms delay between each element
+                });
+
+                // Wait for fade out to complete
+                await new Promise(resolve => setTimeout(resolve, 250));
 
                 try {
                     // Find the new lesson details
@@ -838,7 +904,6 @@
                     const lessonProgress = document.getElementById('lessonProgress');
                     const progressBar = document.getElementById('progress-bar');
                     
-
                     lessonType.textContent = newLesson.type;
                     lessonType.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                         newLesson.type === 'Story' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
@@ -867,16 +932,36 @@
                         document.documentElement.appendChild(bgDiv);
                     }
                     
-                    lessonContent.innerHTML = '<p class="text-center text-gray-600">.</p>';
-                    
                     // Load new lesson content
                     const content = await lesson(lessonId);
                     if (content == null) {
                         lessonContent.innerHTML = '<p class="text-center text-gray-600">This page is empty.</p>';
                     } else {
-                        lessonContent.innerHTML = content;
+                        // Create a temporary container to parse the content
+                        const tempContainer = document.createElement('div');
+                        tempContainer.innerHTML = content;
+                        
+                        // Add lesson-element class to all direct children
+                        Array.from(tempContainer.children).forEach(child => {
+                            child.classList.add('lesson-element');
+                        });
+                        
+                        // Clear and update the lesson content
+                        lessonContent.innerHTML = tempContainer.innerHTML;
+                        
+                        // Animate elements in sequence
+                        const elements = lessonContent.querySelectorAll('.lesson-element');
+                        elements.forEach((element, index) => {
+                            setTimeout(() => {
+                                element.classList.add('visible');
+                            }, index * 50); // 50ms delay between each element
+                        });
                     }
+                    
+                    // Add loaded classes
                     lessonContent.classList.add('loaded');
+                    lessonCard.classList.remove('transitioning');
+                    lessonCard.classList.add('loaded');
                     
                     // Update navigation for the new lesson
                     setupNavigation(course, newChapter, newLessonIndex);
@@ -885,6 +970,8 @@
                     console.error('Error navigating to lesson:', error);
                     lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
                     lessonContent.classList.add('loaded');
+                    lessonCard.classList.remove('transitioning');
+                    lessonCard.classList.add('loaded');
                 }
             }
 
