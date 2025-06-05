@@ -662,6 +662,13 @@
             const statusDisplay = container.querySelector('.essay-status');
             const userInput = textarea.value.trim();
             if (!userInput) return;
+            
+            // If status is not "Unanswered", disable the button
+            if (statusDisplay.textContent !== 'Unanswered') {
+                button.disabled = true;
+                return;
+            }
+            
             button.classList.add('loading');
             button.disabled = true;
             try {
@@ -689,21 +696,24 @@
                 statusDisplay.textContent = gradeText;
                 statusDisplay.className = `essay-status ${statusClass}`;
                 button.textContent = 'Resubmit';
+                button.disabled = true; // Keep button disabled after grading
                 textarea.dataset.lastSubmitted = userInput;
                 textarea.addEventListener('input', function() {
-                    button.disabled = this.value.trim() === this.dataset.lastSubmitted;
                     if (this.value.trim() !== this.dataset.lastSubmitted) {
                         statusDisplay.textContent = 'Unanswered';
                         statusDisplay.className = 'essay-status';
+                        button.disabled = false; // Enable button only when status is "Unanswered"
+                    } else {
+                        button.disabled = true; // Keep disabled if no changes
                     }
                 });
             } catch (error) {
                 console.error('Error grading essay:', error);
                 statusDisplay.textContent = 'Error grading essay';
                 statusDisplay.className = 'essay-status error';
+                button.disabled = true;
             } finally {
                 button.classList.remove('loading');
-                button.disabled = false;
             }
         }
 
