@@ -445,6 +445,10 @@
             justify-content: center;
             align-items: center;
             margin: 1rem 0;
+            width: 100%;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
         }
         .audio-player {
             display: flex;
@@ -455,6 +459,8 @@
             border-radius: 50px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            width: 100%;
+            flex-wrap: nowrap;
         }
         .audio-player:hover {
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -462,6 +468,7 @@
         .play-button {
             width: 40px;
             height: 40px;
+            min-width: 40px; /* Prevent button from shrinking */
             border-radius: 50%;
             background: #007bff;
             border: none;
@@ -481,24 +488,20 @@
             height: 20px;
         }
         .progress-container {
-            width: 200px;
+            flex: 1;
+            min-width: 0; /* Allow container to shrink below its content size */
             height: 4px;
             background: #e9ecef;
             border-radius: 2px;
             overflow: hidden;
             position: relative;
         }
-        .progress-bar {
-            height: 100%;
-            background: #007bff;
-            width: 0%;
-            transition: width 0.1s linear;
-        }
         .time-display {
             font-size: 0.875rem;
             color: #6c757d;
             min-width: 80px;
             text-align: center;
+            white-space: nowrap; /* Prevent time from wrapping */
         }
         .prev-button {
             opacity: 0;
