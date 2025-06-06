@@ -6,7 +6,7 @@
   <title>Classical Math - Premium Coming Soon</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
-    import { getCurrentUser, signOut } from './js/api.js';
+    import { getCurrentUser, signOut, getUserData, setUserData } from './js/api.js';
     
     window.getCurrentUser = getCurrentUser;
     window.signOut = signOut;
@@ -15,14 +15,47 @@
       const user = await getCurrentUser();
       updateUI(user);
       if (user) {
-        checkSpecialOfferStatus(user.uid);
+        // Show loading spinner while checking status
+        const button = document.getElementById('reserve-button');
+        button.innerHTML = `
+          <div class="flex items-center justify-center">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        `;
+        button.disabled = true;
+        
+        try {
+          const userData = await getUserData(user.uid);
+          if (userData && userData.specialOffer) {
+            button.innerHTML = `
+              <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Thanks for Signing Up!
+            `;
+            button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            button.classList.add('bg-green-500', 'hover:bg-green-600');
+            // Show the Start Learning button
+            showStartLearningButton();
+          } else {
+            button.innerHTML = 'Reserve Spot';
+            button.disabled = false;
+          }
+        } catch (error) {
+          console.error('Error checking special offer status:', error);
+          button.innerHTML = 'Reserve Spot';
+          button.disabled = false;
+        }
       }
     });
 
     // Check if user has already signed up for special offer
     async function checkSpecialOfferStatus(userId) {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists() && userDoc.data().specialOffer) {
+      const userData = await getUserData(userId);
+      if (userData && userData.specialOffer) {
         const button = document.getElementById('reserve-button');
         button.innerHTML = `
           <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,6 +66,8 @@
         button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
         button.classList.add('bg-green-500', 'hover:bg-green-600');
         button.disabled = true;
+        // Show the Start Learning button
+        showStartLearningButton();
       }
     }
 
@@ -40,16 +75,13 @@
     window.handleSpecialOfferSignup = async function() {
       const user = await getCurrentUser();
       if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = 'login.html?returnUrl=' + encodeURIComponent(window.location.href);
         return;
       }
 
       try {
-        await setDoc(doc(db, 'users', user.uid), {
-          specialOffer: true,
-          signupDate: new Date().toISOString()
-        }, { merge: true });
-
+        await setUserData(user.uid, 'specialOffer', true);
+        
         const button = document.getElementById('reserve-button');
         button.innerHTML = `
           <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,6 +92,9 @@
         button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
         button.classList.add('bg-green-500', 'hover:bg-green-600');
         button.disabled = true;
+
+        // Show the Start Learning button with animation
+        setTimeout(showStartLearningButton, 500);
       } catch (error) {
         console.error('Error signing up for special offer:', error);
         alert('Something went wrong. Please try again.');
@@ -94,7 +129,7 @@
           <div class="p-8">
             <div class="text-center">
               <h2 class="text-2xl font-bold text-gray-900">Special Offer!</h2>
-              <p class="mt-4 text-4xl font-bold text-gray-900">1 Month Free<span class="text-lg font-normal text-gray-600"> on launch</span></p>
+              <p class="mt-4 text-4xl font-bold text-gray-900">1 Month Free<span class="text-lg font-normal text-gray-600"> at launch</span></p>
             </div>
             
             <ul class="mt-8 space-y-4">
@@ -127,6 +162,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Start Learning Button (initially hidden) -->
+    <div id="start-learning-button" class="fixed bottom-0 left-0 right-0 flex justify-center opacity-0 transform translate-y-full transition-all duration-500">
+      <div class="relative w-64">
+        <!-- Curved white background -->
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-white rounded-t-[100px] shadow-lg transform hover:scale-110 transition-transform duration-300"></div>
+        <!-- Content -->
+        <div class="relative pt-8 pb-4">
+          <a href="lessons.html?file=thales.txt" class="flex flex-col items-center group">
+            <div class="bg-blue-500 p-4 rounded-full shadow-lg group-hover:bg-blue-600 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <span class="mt-2 text-sm font-medium text-gray-600 group-hover:text-gray-900">Start Learning</span>
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -142,9 +196,16 @@
       } else {
         userStatus.textContent = '';
         authButtons.innerHTML = `
-          <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Sign In</button>
+          <button onclick="window.location.href='login.html?returnUrl=' + encodeURIComponent(window.location.href)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Sign In</button>
         `;
       }
+    }
+
+    // Show start learning button with animation
+    function showStartLearningButton() {
+      const button = document.getElementById('start-learning-button');
+      button.classList.remove('opacity-0', 'translate-y-full');
+      button.classList.add('opacity-100', 'translate-y-0');
     }
   </script>
 </body>
