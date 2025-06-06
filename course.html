@@ -188,6 +188,104 @@
             border-left-color: transparent;
         }
 
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+
+        .modal-content:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .modal-subtitle {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .modal-subtitle span {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6B7280;
+            margin-left: 0.5rem;
+            display: inline-block;
+            margin-top: -0.25rem;
+            vertical-align: top;
+        }
+
+        .modal-grade {
+            display: inline-block;
+            background: #F3F4F6;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            color: #4B5563;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-description {
+            text-align: justify;
+            color: #4B5563;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-button {
+            display: inline-block;
+            background: linear-gradient(to right, #9333ea, #3b82f6);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            transform: scale(1.05);
+        }
+
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
@@ -237,6 +335,20 @@
         </div>
     </div>
 
+    <!-- Locked Lesson Modal -->
+    <div class="modal-overlay" id="lockedLessonModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Thanks for demoing...</h2>
+            <h1 class="modal-subtitle">History of Arithmetic</h1>
+            <div class="modal-grade">Grades: 6th - 12th</div>
+            <p class="modal-description">Doing classical math strengthens your brain while having fun and learning history! If you like what you see, we have a special offer:</p>
+            <div class="flex flex-col items-center gap-4">
+                <a href="shop.html" class="modal-button">Special Offer →</a>
+                <button onclick="closeLockedLessonModal()" class="text-gray-500 hover:text-gray-700 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         async function loadCourse() {
             try {
@@ -265,7 +377,9 @@
                                     </svg>
                                 </div>
                             ` : lessons.map(lesson => `
-                                <a href="lessons.html?file=${lesson.file}" class="lesson-link ${lesson.status === 'locked' ? 'locked' : ''}">
+                                <a href="${lesson.status === 'locked' ? '#' : `lessons.html?file=${lesson.file}`}" 
+                                   class="lesson-link ${lesson.status === 'locked' ? 'locked' : ''}"
+                                   onclick="${lesson.status === 'locked' ? 'showLockedLessonModal(); return false;' : ''}">
                                     <span class="lesson-type type-${lesson.type.toLowerCase()}">${lesson.type}</span>
                                     ${lesson.name}
                                     ${lesson.status === 'locked' ? `
@@ -320,6 +434,17 @@
 
         // Load the course when the page loads
         document.addEventListener('DOMContentLoaded', loadCourse);
+
+        // Locked Lesson Modal Functions
+        function showLockedLessonModal() {
+            const modal = document.getElementById('lockedLessonModal');
+            modal.classList.add('active');
+        }
+
+        function closeLockedLessonModal() {
+            const modal = document.getElementById('lockedLessonModal');
+            modal.classList.remove('active');
+        }
     </script>
 </body>
 </html> 
