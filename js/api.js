@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signOut as firebaseSignOut
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -22,23 +23,25 @@ const firebaseConfig = {
 let app;
 let auth;
 let functions;
+let db;
 
 function initializeFirebase() {
   if (!app) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     functions = getFunctions(app);
+    db = getFirestore(app);
     
     // Connect to emulator in development
     if (window.location.hostname !== 'classicalmath.org') {
       connectFunctionsEmulator(functions, "localhost", 5002);
     }
   }
-  return { app, auth, functions };
+  return { app, auth, functions, db };
 }
 
 // Initialize Firebase when the module is imported
-const { app: firebaseApp, auth: firebaseAuth, functions: firebaseFunctions } = initializeFirebase();
+const { app: firebaseApp, auth: firebaseAuth, functions: firebaseFunctions, db: firebaseDb } = initializeFirebase();
 
 // API Functions
 export async function pingServer() {
@@ -57,8 +60,26 @@ export async function pingServer() {
 export function getCurrentUser() {
   return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, 
-      (user) => {
+      async (user) => {
         unsubscribe();
+        if (user) {
+          // Check if user exists in Firestore
+          const userDoc = await getDoc(doc(firebaseDb, "users", user.uid));
+          if (!userDoc.exists()) {
+            // Create new user document
+            const userData = {
+              name: user.displayName || "(Blank)",
+              email_notifications: true,
+              questions: {
+                id_0: {
+                  answer: 'Water',
+                  score: 10
+                }
+              }
+            };
+            await setDoc(doc(firebaseDb, "users", user.uid), userData);
+          }
+        }
         resolve(user);
       },
       (error) => {
@@ -216,4 +237,59 @@ function parseLessonContent(text) {
       }
   }
   return html;
+}
+
+// ✅ SET user data (full or field)
+export async function setUserData(userId, dataOrField, value = null) {
+  const userRef = doc(firebaseDb, "users", userId);
+
+  try {
+    if (typeof dataOrField === "object" && value === null) {
+      // Full document set
+      await setDoc(userRef, dataOrField);
+      console.log("User data written successfully.");
+    } else if (typeof dataOrField === "string" && value !== null) {
+      // Single field update
+      const updateObj = {};
+      updateObj[dataOrField] = value;
+
+      await setDoc(userRef, updateObj, { merge: true });
+      console.log(`Field '${dataOrField}' updated.`);
+    } else {
+      console.error("Invalid parameters to setUserData.");
+    }
+  } catch (error) {
+    console.error("Error writing/updating user data: ", error);
+  }
+}
+
+// ✅ GET user data (full or field)
+export async function getUserData(userId, field = null) {
+  const userRef = doc(firebaseDb, "users", userId);
+
+  try {
+    const docSnap = await getDoc(userRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (field) {
+        console.log(`Field '${field}':`, data[field]);
+        return data[field];
+      } else {
+        console.log("User data:", data);
+        return data;
+      }
+    } else {
+      console.log("No such user!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching user data: ", error);
+    return null;
+  }
+}
+
+export async function doesUserExist(userId) {
+  const userDoc = await getDoc(doc(firebaseDb, "users", userId));
+  return userDoc.exists();
 }
