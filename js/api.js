@@ -70,12 +70,7 @@ export function getCurrentUser() {
             const userData = {
               name: user.displayName || "(Blank)",
               email_notifications: true,
-              questions: {
-                id_0: {
-                  answer: 'Water',
-                  score: 10
-                }
-              }
+              questions: {}
             };
             await setDoc(doc(firebaseDb, "users", user.uid), userData);
           }
@@ -191,11 +186,11 @@ function parseLessonContent(text) {
               </div>
           `;
       } else if (line.trim().startsWith('! essay:')) {
-          const essayMatch = line.match(/! essay: (.*) answer: (.*)/);
+          const essayMatch = line.match(/! essay: (.*) answer: (.*) id: (.*)/);
           if (essayMatch) {
-              const [_, question, answer] = essayMatch;
+              const [_, question, answer, id] = essayMatch;
               html += `
-                  <div class="essay-container">
+                  <div class="essay-container" data-essay-id="${id}">
                       <div class="essay-question">${question}</div>
                       <textarea class="essay-textarea" placeholder="Type your answer here..."></textarea>
                       <div class="loading-spinner"></div>
@@ -293,3 +288,4 @@ export async function doesUserExist(userId) {
   const userDoc = await getDoc(doc(firebaseDb, "users", userId));
   return userDoc.exists();
 }
+
