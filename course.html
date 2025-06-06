@@ -90,11 +90,26 @@
         }
 
         .toggle-icon {
-            color: var(--text-light);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-icon svg {
+            width: 16px;
+            height: 16px;
             transition: transform 0.3s ease;
         }
 
-        .chapter.active .toggle-icon {
+        .toggle-icon path {
+            stroke: var(--text-light);
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .chapter.active .toggle-icon svg {
             transform: rotate(180deg);
         }
 
@@ -175,30 +190,33 @@
         }
     </style>
 </head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="index.html" class="text-xl font-semibold text-gray-800">Classical Math</a>
-                </div>
-                <div class="flex items-center">
-                    <div id="userStatus" class="text-gray-600 mr-4"></div>
-                    <div id="authButtons"></div>
+<body class="bg-gray-50 min-h-screen relative">
+    <div class="absolute inset-0 bg-[url('images/thales_bg.webp')] bg-no-repeat bg-cover bg-center opacity-30"></div>
+    <div class="relative">
+        <!-- Navigation Bar -->
+        <nav class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="index.html" class="text-xl font-semibold text-gray-800">Classical Math</a>
+                    </div>
+                    <div class="flex items-center">
+                        <div id="userStatus" class="text-gray-600 mr-4"></div>
+                        <div id="authButtons"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="container">
-        <div class="text-center mb-8 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-            <h2 class="text-2xl font-semibold mb-2 text-gray-700">Thanks for trying out</h2>
-            <h1 class="text-4xl font-bold mb-2">History of Arithmetic <span class="text-sm uppercase tracking-wider text-gray-500 -mt-1 inline-block">demo</span></h1>
-            <div class="inline-block bg-gray-100 px-4 py-2 rounded-full text-gray-600 text-sm">Grades: 6th - 12th</div>
-        </div>
-        <div class="course-content" id="courseContent">
-            <!-- Content will be dynamically loaded here -->
+        <div class="container">
+            <div class="text-center mb-8 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+                <h2 class="text-2xl font-semibold mb-2 text-gray-700">Thanks for trying out...</h2>
+                <h1 class="text-4xl font-bold mb-2">History of Arithmetic <span class="text-sm uppercase tracking-wider text-gray-500 -mt-1 inline-block">demo</span></h1>
+                <div class="inline-block bg-gray-100 px-4 py-2 rounded-full text-gray-600 text-sm">Grades: 6th - 12th</div>
+            </div>
+            <div class="course-content" id="courseContent">
+                <!-- Content will be dynamically loaded here -->
+            </div>
         </div>
     </div>
 
@@ -216,7 +234,11 @@
                     chapterDiv.innerHTML = `
                         <div class="chapter-header" onclick="toggleChapter(this.parentElement)">
                             <h2>${chapter}</h2>
-                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 4,8 L 12,16 L 20,8"/>
+                                </svg>
+                            </span>
                         </div>
                         <div class="chapter-content">
                             ${lessons.map(lesson => `
@@ -237,8 +259,6 @@
 
         function toggleChapter(chapter) {
             chapter.classList.toggle('active');
-            const icon = chapter.querySelector('.toggle-icon');
-            icon.textContent = chapter.classList.contains('active') ? '▼' : '▶';
         }
 
         // Update UI based on user state
