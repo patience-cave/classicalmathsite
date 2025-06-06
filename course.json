@@ -3,7 +3,7 @@
         {
             "type": "Story",
             "file": "thales.txt",
-            "name": "Thales",
+            "name": "Thales of Miletus",
             "bg": "thales_bg.webp"
         },
         {
@@ -27,7 +27,7 @@
         {
             "type": "Story",
             "file": "anaximander.txt",
-            "name": "Anaximander"
+            "name": "Anaximander of Miletus"
         },
         {
             "type": "Lesson",
