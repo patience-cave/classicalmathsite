@@ -157,6 +157,7 @@ function parseLessonContent(text) {
           }
       } else if (line.trim().startsWith('! quote:')) {
           const quoteMatch = line.match(/! quote: (.*) source: (.*)/);
+          const quoteMatch_2 = line.match(/! quote: (.*)/);
           if (quoteMatch) {
               const [_, quoteText, source] = quoteMatch;
               window.quoteCounter = (window.quoteCounter || 0) + 1;
@@ -164,6 +165,13 @@ function parseLessonContent(text) {
                   <div class="quote-container">
                       <p class="quote-text">${quoteText}<span class="quote-number" onclick="toggleSource(this)">${window.quoteCounter}</span></p>
                       <div class="quote-source">${source}</div>
+                  </div>
+              `;
+          } else if (quoteMatch_2) {
+              const [_, quoteText] = quoteMatch_2;
+              html += `
+                  <div class="simple-quote-container">
+                      <p class="quote-text">${quoteText}</p>
                   </div>
               `;
           }
