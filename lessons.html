@@ -493,14 +493,34 @@
             height: 4px;
             background: #e9ecef;
             border-radius: 2px;
-            overflow: hidden;
+            overflow: visible; /* Changed from hidden to show handle */
             position: relative;
+            cursor: pointer;
         }
         .progress-bar {
             height: 100%;
             background: #007bff;
             width: 0%;
             transition: width 0.1s linear;
+        }
+        .progress-handle {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            width: 12px;
+            height: 12px;
+            background: #007bff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            cursor: grab;
+        }
+        .progress-handle.visible {
+            opacity: 1;
+        }
+        .progress-handle:active {
+            cursor: grabbing;
         }
         .time-display {
             font-size: 0.875rem;
@@ -823,8 +843,10 @@
             const player = button.closest('.audio-player');
             const audio = player.querySelector('audio');
             const progressBar = player.querySelector('.progress-bar');
+            const progressHandle = player.querySelector('.progress-handle');
             const timeDisplay = player.querySelector('.time-display');
             const svg = button.querySelector('svg');
+            
             if (audio.paused) {
                 audio.play();
                 svg.innerHTML = `
@@ -832,21 +854,27 @@
                     <rect x="8" y="8" width="3" height="8" rx="1"/>
                     <rect x="13" y="8" width="3" height="8" rx="1"/>
                 `;
+                progressHandle.classList.remove('visible');
+                
                 audio.addEventListener('timeupdate', () => {
                     const progress = (audio.currentTime / audio.duration) * 100;
                     progressBar.style.width = `${progress}%`;
+                    progressHandle.style.left = `${progress}%`;
                     const currentMinutes = Math.floor(audio.currentTime / 60);
                     const currentSeconds = Math.floor(audio.currentTime % 60);
                     const durationMinutes = Math.floor(audio.duration / 60);
                     const durationSeconds = Math.floor(audio.duration % 60);
                     timeDisplay.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${durationMinutes}:${durationSeconds.toString().padStart(2, '0')}`;
                 });
+                
                 audio.addEventListener('ended', () => {
                     svg.innerHTML = `
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M10 8l6 4-6 4V8z"/>
                     `;
                     progressBar.style.width = '0%';
+                    progressHandle.style.left = '0%';
+                    progressHandle.classList.add('visible');
                     timeDisplay.textContent = '0:00 / 0:00';
                 });
             } else {
@@ -855,7 +883,67 @@
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M10 8l6 4-6 4V8z"/>
                 `;
+                progressHandle.classList.add('visible');
             }
+        }
+
+        // Add this new function to handle progress bar dragging
+        function setupProgressBarDrag(player) {
+            const audio = player.querySelector('audio');
+            const progressContainer = player.querySelector('.progress-container');
+            const progressBar = player.querySelector('.progress-bar');
+            const progressHandle = player.querySelector('.progress-handle');
+            
+            let isDragging = false;
+            
+            function updateProgress(e) {
+                const rect = progressContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percentage = (x / rect.width) * 100;
+                const boundedPercentage = Math.max(0, Math.min(100, percentage));
+                
+                progressBar.style.width = `${boundedPercentage}%`;
+                progressHandle.style.left = `${boundedPercentage}%`;
+                
+                if (audio.duration) {
+                    audio.currentTime = (boundedPercentage / 100) * audio.duration;
+                }
+            }
+            
+            progressContainer.addEventListener('mousedown', (e) => {
+                if (audio.paused) {
+                    isDragging = true;
+                    updateProgress(e);
+                }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    updateProgress(e);
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // Add touch support
+            progressContainer.addEventListener('touchstart', (e) => {
+                if (audio.paused) {
+                    isDragging = true;
+                    updateProgress(e.touches[0]);
+                }
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    updateProgress(e.touches[0]);
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                isDragging = false;
+            });
         }
 
         // Load lesson content from API
@@ -980,6 +1068,16 @@
                     }
                     lessonContent.classList.add('loaded');
                     lessonCard.classList.add('loaded');
+
+                    // Inside the content loading section, after creating the audio player:
+                    const audioPlayers = lessonContent.querySelectorAll('.audio-player');
+                    audioPlayers.forEach(player => {
+                        const progressContainer = player.querySelector('.progress-container');
+                        const progressHandle = document.createElement('div');
+                        progressHandle.className = 'progress-handle';
+                        progressContainer.appendChild(progressHandle);
+                        setupProgressBarDrag(player);
+                    });
                 }).catch(error => {
                     console.error('Error loading lesson content:', error);
                     lessonContent.innerHTML = '<p class="text-center text-red-600">We apologize! There was a problem loading this lesson.</p>';
