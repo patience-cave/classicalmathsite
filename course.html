@@ -191,7 +191,7 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen relative">
-    <div class="absolute inset-0 bg-[url('images/thales_bg.webp')] bg-no-repeat bg-cover bg-center opacity-30"></div>
+    <div class="fixed inset-0 bg-[url('images/thales_bg.webp')] bg-no-repeat bg-fixed bg-center opacity-30"></div>
     <div class="relative">
         <!-- Navigation Bar -->
         <nav class="bg-white shadow-sm">
@@ -223,7 +223,7 @@
     <script>
         async function loadCourse() {
             try {
-                const response = await fetch('course.json?v=2');
+                const response = await fetch('course.json?v=3');
                 const course = await response.json();
                 const courseContent = document.getElementById('courseContent');
                 

@@ -1,5 +1,5 @@
 {
-    "Chapter 1: The Beginning": [
+    "Chapter 1. The Beginning": [
         {
             "type": "Story",
             "file": "thales.txt",
@@ -45,11 +45,46 @@
             "name": "Infinity Plus 1"
         }
     ],
-    "Chapter 2: Early Greek Mathematics": [
+    "Chapter 2. The Father of Numbers": [
         {
             "type": "Story",
             "file": "pythagoras.txt",
             "name": "Pythagoras"
-        }
-    ]
+        },
+        {
+            "type": "Lesson",
+            "file": "lesson-3.txt",
+            "name": "Numbers and Nature"
+        },
+        {
+            "type": "Teasers",
+            "file": "questions-3.txt",
+            "name": "What are Laws of Nature?"
+        },
+        {
+            "type": "Challenge",
+            "file": "challenge-3.txt",
+            "name": "Breaking the Laws of Nature"
+        },
+        {
+            "type": "Bonus",
+            "file": "bonus-3.txt",
+            "name": "Is 10 Special?"
+        },
+        {
+            "type": "Story",
+            "file": "pythagoras-teacher.txt",
+            "name": "How Pythagoras Began Teaching"
+        }   
+    ],
+    "Chapter 3. The Early Pythagoreans": [],
+    "Chapter 4. The Parts of Numbers": [],
+    "Chapter 5. Triangle and Square Numbers": [],
+    "Chapter 6. Harmonic Numbers": [],
+    "Chapter 7. Pythagorean Algebra": [],
+    "Chapter 8. The Downfall of Numbers": [],
+    "Chapter 9. Paradoxes and Infinitesimals": [],
+    "Chapter 10. Philosophy of Numbers": [],
+    "Chapter 11. Bloom of Thymaridas": [],
+    "Chapter 12. Theory of Proportions": []
 } 
