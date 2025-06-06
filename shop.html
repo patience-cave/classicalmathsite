@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classical Math - Premium Coming Soon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { getCurrentUser, signOut } from './js/api.js';
+    
+    window.getCurrentUser = getCurrentUser;
+    window.signOut = signOut;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await getCurrentUser();
+      updateUI(user);
+      if (user) {
+        checkSpecialOfferStatus(user.uid);
+      }
+    });
+
+    // Check if user has already signed up for special offer
+    async function checkSpecialOfferStatus(userId) {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists() && userDoc.data().specialOffer) {
+        const button = document.getElementById('reserve-button');
+        button.innerHTML = `
+          <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Thanks for Signing Up!
+        `;
+        button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        button.classList.add('bg-green-500', 'hover:bg-green-600');
+        button.disabled = true;
+      }
+    }
+
+    // Handle special offer signup
+    window.handleSpecialOfferSignup = async function() {
+      const user = await getCurrentUser();
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          specialOffer: true,
+          signupDate: new Date().toISOString()
+        }, { merge: true });
+
+        const button = document.getElementById('reserve-button');
+        button.innerHTML = `
+          <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Thanks for Signing Up!
+        `;
+        button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        button.classList.add('bg-green-500', 'hover:bg-green-600');
+        button.disabled = true;
+      } catch (error) {
+        console.error('Error signing up for special offer:', error);
+        alert('Something went wrong. Please try again.');
+      }
+    };
+  </script>
+</head>
+<body class="bg-gray-50 min-h-screen relative">
+  <div class="absolute inset-0 bg-[url('images/math_background.png')] bg-no-repeat bg-cover bg-center opacity-70"></div>
+  <div class="relative">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <a href="index.html" class="text-xl font-semibold text-gray-800">Classical Math</a>
+          </div>
+          <div class="flex items-center">
+            <div id="userStatus" class="text-gray-600 mr-4"></div>
+            <div id="authButtons"></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Coming Soon Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      
+      <!-- Special Offer Card -->
+      <div class="max-w-lg mx-auto">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+          <div class="p-8">
+            <div class="text-center">
+              <h2 class="text-2xl font-bold text-gray-900">Special Offer!</h2>
+              <p class="mt-4 text-4xl font-bold text-gray-900">1 Month Free<span class="text-lg font-normal text-gray-600"> on launch</span></p>
+            </div>
+            
+            <ul class="mt-8 space-y-4">
+              <li class="flex items-center">
+                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="ml-3 text-gray-600">Reserve your spot now</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="ml-3 text-gray-600">Get your coupon code on September 1st</span>
+              </li>
+              <li class="flex items-center">
+                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="ml-3 text-gray-600">All access subscription</span>
+              </li>
+            </ul>
+
+            <div class="mt-8">
+              <button id="reserve-button" onclick="handleSpecialOfferSignup()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+                Reserve Spot
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Update UI based on user state
+    function updateUI(user) {
+      const userStatus = document.getElementById('userStatus');
+      const authButtons = document.getElementById('authButtons');
+      
+      if (user) {
+        authButtons.innerHTML = `
+          <a href="settings.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Account</a>
+        `;
+      } else {
+        userStatus.textContent = '';
+        authButtons.innerHTML = `
+          <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Sign In</button>
+        `;
+      }
+    }
+  </script>
+</body>
+</html> 
