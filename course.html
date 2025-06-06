@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
     <script type="module">
         // Import our API module
-        import { getCurrentUser, signOut } from './js/api.js';
+        import { getCurrentUser, signOut } from './js/api.js?v=1';
         // Make functions available globally
         window.getCurrentUser = getCurrentUser;
         window.signOut = signOut;
@@ -146,6 +146,16 @@
             color: #16a34a;
         }
 
+        .type-teasers {
+            background-color: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .type-challenge {
+            background-color: #fff7ed;
+            color: #ea580c;
+        }
+
         @media (max-width: 640px) {
             .container {
                 padding: 1rem;
@@ -191,7 +201,7 @@
     <script>
         async function loadCourse() {
             try {
-                const response = await fetch('course.json');
+                const response = await fetch('course.json?v=1');
                 const course = await response.json();
                 const courseContent = document.getElementById('courseContent');
                 

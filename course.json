@@ -13,6 +13,18 @@
             "bg": "thales_bg.webp"
         },
         {
+            "type": "Teasers",
+            "file": "puzzles-1.txt",
+            "name": "Do you like numbers?",
+            "bg": "thales_bg.webp"
+        },
+        {
+            "type": "Challenge",
+            "file": "challenge-1.txt",
+            "name": "Is 1 a number?",
+            "bg": "thales_bg.webp"
+        },
+        {
             "type": "Story",
             "file": "anaximander.txt",
             "name": "Anaximander"
