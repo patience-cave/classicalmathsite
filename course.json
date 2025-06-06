@@ -32,51 +32,23 @@
         {
             "type": "Lesson",
             "file": "lesson2.txt",
-            "name": "What are Endless Numbers?"
+            "name": "What are Endless Numbers?",
+            "status": "locked"
         },
         {
             "type": "Teasers",
             "file": "puzzles-2.txt",
-            "name": "Do we Encounter the Infinite?"
+            "name": "Do we Encounter the Infinite?",
+            "status": "locked"
         },
         {
             "type": "Challenge",
             "file": "challenge-2.txt",
-            "name": "Infinity Plus 1"
+            "name": "Infinity Plus 1",
+            "status": "locked"
         }
     ],
-    "Chapter 2. The Father of Numbers": [
-        {
-            "type": "Story",
-            "file": "pythagoras.txt",
-            "name": "Pythagoras"
-        },
-        {
-            "type": "Lesson",
-            "file": "lesson-3.txt",
-            "name": "Numbers and Nature"
-        },
-        {
-            "type": "Teasers",
-            "file": "questions-3.txt",
-            "name": "What are Laws of Nature?"
-        },
-        {
-            "type": "Challenge",
-            "file": "challenge-3.txt",
-            "name": "Breaking the Laws of Nature"
-        },
-        {
-            "type": "Bonus",
-            "file": "bonus-3.txt",
-            "name": "Is 10 Special?"
-        },
-        {
-            "type": "Story",
-            "file": "pythagoras-teacher.txt",
-            "name": "How Pythagoras Began Teaching"
-        }   
-    ],
+    "Chapter 2. The Father of Numbers": [],
     "Chapter 3. The Early Pythagoreans": [],
     "Chapter 4. The Parts of Numbers": [],
     "Chapter 5. Triangle and Square Numbers": [],
