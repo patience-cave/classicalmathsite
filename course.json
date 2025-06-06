@@ -27,7 +27,8 @@
         {
             "type": "Story",
             "file": "anaximander.txt",
-            "name": "Anaximander of Miletus"
+            "name": "Anaximander of Miletus",
+            "bg": "thales_bg.webp"
         },
         {
             "type": "Lesson",
