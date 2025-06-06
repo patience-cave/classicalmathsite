@@ -503,6 +503,9 @@
             width: 0%;
             transition: width 0.1s linear;
         }
+        .progress-bar.dragging {
+            transition: none;
+        }
         .progress-handle {
             position: absolute;
             top: 50%;
@@ -913,6 +916,7 @@
             progressContainer.addEventListener('mousedown', (e) => {
                 if (audio.paused) {
                     isDragging = true;
+                    progressBar.classList.add('dragging');
                     updateProgress(e);
                 }
             });
@@ -924,13 +928,17 @@
             });
             
             document.addEventListener('mouseup', () => {
-                isDragging = false;
+                if (isDragging) {
+                    isDragging = false;
+                    progressBar.classList.remove('dragging');
+                }
             });
             
             // Add touch support
             progressContainer.addEventListener('touchstart', (e) => {
                 if (audio.paused) {
                     isDragging = true;
+                    progressBar.classList.add('dragging');
                     updateProgress(e.touches[0]);
                 }
             });
@@ -942,7 +950,10 @@
             });
             
             document.addEventListener('touchend', () => {
-                isDragging = false;
+                if (isDragging) {
+                    isDragging = false;
+                    progressBar.classList.remove('dragging');
+                }
             });
         }
 
