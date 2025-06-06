@@ -1418,6 +1418,38 @@
                     lessonCard.classList.remove('transitioning');
                     lessonCard.classList.add('loaded');
                     
+                    // Initialize audio players for the new content
+                    const audioPlayers = lessonContent.querySelectorAll('.audio-player');
+                    audioPlayers.forEach(player => {
+                        const progressContainer = player.querySelector('.progress-container');
+                        const progressHandle = document.createElement('div');
+                        progressHandle.className = 'progress-handle';
+                        progressContainer.appendChild(progressHandle);
+                        setupProgressBarDrag(player);
+
+                        // Add duration loading
+                        const audio = player.querySelector('audio');
+                        const timeDisplay = player.querySelector('.time-display');
+                        
+                        // Function to format time
+                        function formatTime(seconds) {
+                            const minutes = Math.floor(seconds / 60);
+                            const remainingSeconds = Math.floor(seconds % 60);
+                            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+                        }
+
+                        // Update time display when metadata is loaded
+                        audio.addEventListener('loadedmetadata', () => {
+                            const duration = formatTime(audio.duration);
+                            timeDisplay.textContent = `0:00 / ${duration}`;
+                        });
+
+                        // Handle loading errors
+                        audio.addEventListener('error', () => {
+                            timeDisplay.textContent = 'Error loading audio';
+                        });
+                    });
+                    
                     // Update navigation for the new lesson
                     setupNavigation(course, newChapter, newLessonIndex);
                     
