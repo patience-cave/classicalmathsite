@@ -14,7 +14,7 @@
         },
         {
             "type": "Teasers",
-            "file": "puzzles-1.txt",
+            "file": "questions-1.txt",
             "name": "Do you like numbers?",
             "bg": "thales_bg.webp"
         },

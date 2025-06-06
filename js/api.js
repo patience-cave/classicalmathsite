@@ -139,6 +139,7 @@ function parseLessonContent(text) {
           .replace(/\*(.*?)\*/g, '<em>$1</em>');
   }
   for (let line of lines) {
+      
       line = formatText(line);
       if (line.startsWith('# ')) {
           html += `<h1 class="text-4xl font-bold text-gray-900 mb-4">${line.substring(2)}</h1>`;
@@ -200,20 +201,28 @@ function parseLessonContent(text) {
               `;
           }
       } else if (line.trim().startsWith('! question:')) {
-          const questionMatch = line.match(/! question: (.*) a: (.*) b: (.*) c: (.*) d: (.*) e: (.*)/);
+          const questionMatch = line.match(/^! question: (.*?)((?: [a-z]: .*?)*)$/);
           if (questionMatch) {
-              const [_, question, correctAnswer, ...otherAnswers] = questionMatch;
-              const allAnswers = [correctAnswer, ...otherAnswers];
+              const question = questionMatch[1].trim();
+              const rawAnswers = questionMatch[2].trim();
+          
+              // Extract answer label-text pairs (a: ..., b: ..., etc.)
+              const allAnswers = [...rawAnswers.matchAll(/([a-z]): (.*?)(?= [a-z]: |$)/g)].map(m => ({
+                  label: m[1],
+                  text: m[2].trim()
+              }));
+          
               const shuffledAnswers = shuffleArray([...allAnswers]);
+                  
               html += `
                   <div class="quiz-container">
                       <div class="quiz-question">${question}</div>
                       <div class="quiz-answers">
-                          ${shuffledAnswers.map((answer, index) => `
-                              <div class="quiz-answer" onclick="checkAnswer(this, '${answer}', '${correctAnswer}')">
-                                  <span class="answer-text">${answer}</span>
+                          ${shuffledAnswers.map((answer) => `
+                              <div class="quiz-answer" onclick="checkAnswer(this, '${answer.text}', '${allAnswers[0].text}')">
+                                  <span class="answer-text">${answer.text}</span>
                                   <div class="answer-feedback">
-                                      ${answer === correctAnswer ? 
+                                      ${answer.text === allAnswers[0].text ? 
                                           '<svg class="checkmark" viewBox="0 0 24 24"><path d="M20 6L9 17L4 12"/></svg>Correct' : 
                                           '<svg class="x-mark" viewBox="0 0 24 24"><path d="M6 6L18 18M6 18L18 6"/></svg>Not Quite'}
                                   </div>

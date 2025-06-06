@@ -181,10 +181,13 @@
             border-radius: 8px;
             padding: 0.8rem 1.2rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s ease;
             font-size: 1rem;
             position: relative;
             overflow: hidden;
+            min-height: 3rem;
+            display: flex;
+            align-items: center;
         }
         .quiz-answer:hover {
             background: #f0f0f0;
@@ -202,6 +205,7 @@
         }
         .answer-text {
             transition: opacity 0.2s ease;
+            flex: 1;
         }
         .answer-feedback {
             position: absolute;
@@ -214,6 +218,7 @@
             align-items: center;
             gap: 8px;
             white-space: nowrap;
+            pointer-events: none;
         }
         .answer-feedback.visible {
             opacity: 1;
