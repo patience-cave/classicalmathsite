@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
     <script type="module">
         // Import our API module
         import { getCurrentUser, signOut } from './js/api.js';
@@ -41,7 +41,7 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Merriweather', serif;
             line-height: 1.6;
             color: var(--text);
             background: var(--background);
@@ -235,7 +235,7 @@
             if (user) {
                 userStatus.textContent = `Welcome ${user.email}`;
                 authButtons.innerHTML = `
-                    <a href="settings.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Settings</a>
+                    <a href="settings.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Account</a>
                 `;
             } else {
                 userStatus.textContent = '';
