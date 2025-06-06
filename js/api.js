@@ -190,7 +190,7 @@ function parseLessonContent(text) {
           if (essayMatch) {
               const [_, question, answer, id] = essayMatch;
               html += `
-                  <div class="essay-container" data-essay-id="${id}">
+                  <div class="essay-container">
                       <div class="essay-question">${question}</div>
                       <textarea class="essay-textarea" placeholder="Type your answer here..."></textarea>
                       <div class="loading-spinner"></div>
@@ -288,4 +288,3 @@ export async function doesUserExist(userId) {
   const userDoc = await getDoc(doc(firebaseDb, "users", userId));
   return userDoc.exists();
 }
-
