@@ -6,6 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classical Math</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.2s ease-in forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
   <script type="module">
     // Import our API module
     import { getCurrentUser, signOut } from './js/api.js';
@@ -86,12 +96,12 @@
       if (user) {
         //userStatus.textContent = `Welcome ${user.email}`;
         authButtons.innerHTML = `
-          <a href="settings.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Account</a>
+          <a href="settings.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition fade-in">Account</a>
         `;
       } else {
         userStatus.textContent = '';
         authButtons.innerHTML = `
-          <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Sign In</button>
+          <button onclick="window.location.href='login.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition fade-in">Sign In</button>
         `;
       }
     }
