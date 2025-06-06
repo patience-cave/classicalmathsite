@@ -9,11 +9,12 @@
     <script type="module">
         // Import our API module
         
-        import { getCurrentUser, signOut, lesson } from './js/api.js?v=35';
+        import { getCurrentUser, signOut, lesson, grade } from './js/api.js?v=44';
         // Make functions available globally
         window.getCurrentUser = getCurrentUser;
         window.signOut = signOut;
         window.lesson = lesson;
+        window.grade = grade;
 
         // Check auth state on page load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -702,17 +703,6 @@
             return oldProgress;
         }
 
-        const baseApiUrl = "https://api-6zbinsbuqq-uc.a.run.app";
-        async function grade(answer, user_input) {
-            const response = await fetch(`${baseApiUrl}/grade`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ answer, user_input: user_input })
-            });
-            const result = await response.json();
-            return result['response']['out_of_ten'];
-        }
-
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -737,7 +727,10 @@
             button.classList.add('loading');
             button.disabled = true;
             try {
-                const score = await grade(correctAnswer, userInput);
+                console.log('Submitting essay:', userInput, correctAnswer);
+                const wrapped_score = await grade(userInput, correctAnswer);
+                const score = wrapped_score['out_of_ten'];
+                console.log('Score:', score);
                 let gradeText = '';
                 let statusClass = '';
                 
@@ -754,9 +747,15 @@
                 } else if (score >= 5) {
                     gradeText = `Almost! Please explain!`;
                     statusClass = 'excellent';
-                } else {
+                } else if (score >= 0) {
                     gradeText = `Interesting perspective! Try again?`;
                     statusClass = 'excellent';
+                } else if (score == -1) {
+                    gradeText = `Log in to submit!`;
+                    statusClass = 'good';
+                } else {
+                    gradeText = `Something broke!`;
+                    statusClass = 'good';
                 }
                 
                 statusDisplay.textContent = gradeText;

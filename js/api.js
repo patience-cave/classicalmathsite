@@ -79,6 +79,19 @@ export async function signOut() {
   }
 }
 
+// API Functions
+export async function grade(userInput, correctAnswer) {
+  try {
+    const gradeFunction = httpsCallable(firebaseFunctions, 'grade');
+    const result = await gradeFunction({userInput, correctAnswer});
+    console.log('Result:', result);
+    return result.data;
+  } catch (error) {
+    console.error('Error calling GRADE ChatGPT:', error);
+    throw error;
+  }
+}
+
 // Get lesson content
 export async function lesson(lessonId) {
   try {
