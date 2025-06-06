@@ -28,6 +28,21 @@
             "type": "Story",
             "file": "anaximander.txt",
             "name": "Anaximander"
+        },
+        {
+            "type": "Lesson",
+            "file": "lesson2.txt",
+            "name": "What are Endless Numbers?"
+        },
+        {
+            "type": "Teasers",
+            "file": "puzzles-2.txt",
+            "name": "Do we Encounter the Infinite?"
+        },
+        {
+            "type": "Challenge",
+            "file": "challenge-2.txt",
+            "name": "Infinity Plus 1"
         }
     ],
     "Chapter 2: Early Greek Mathematics": [
