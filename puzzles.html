@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sliding‑Ball Grid – Multilevel</title>
+  <style>
+    /* ────────────────────────────────────────────────────────────── */
+    /* GLOBAL  &  BACKGROUND                                         */
+    /* ────────────────────────────────────────────────────────────── */
+    html,body{
+      margin:0;padding:0;height:100%;width:100%;overflow:hidden;
+      touch-action:none;
+      background:radial-gradient(circle at 25% 25%,#3b5ba9,#1e2a52 80%);
+      display:flex;align-items:center;justify-content:center;
+      font-family:system-ui,sans-serif;user-select:none;
+    }
+    *, *::before, *::after {
+      touch-action: manipulation;
+    }
+    button{font:inherit;border:none;cursor:pointer;background:none;color:#fff}
+
+    /* ────────────────────────────────────────────────────────────── */
+    /* HUD  (level badge + menu)                                     */
+    /* ────────────────────────────────────────────────────────────── */
+    #hud{position:fixed;top:10px;left:10px;right:10px;z-index:100;display:flex;justify-content:space-between;pointer-events:none;}
+    #levelSelectBtn{pointer-events:auto;background:#ffffff22;border-radius:12px;width:42px;height:42px;backdrop-filter:blur(6px);box-shadow:0 4px 6px #0008;font-size:1.4rem;}
+    #levelNumber{
+      pointer-events:auto;background:#ffffff22;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-weight:700;backdrop-filter:blur(6px);box-shadow:0 4px 6px #0008;
+      position:fixed;          /* take it out of the flex row   */
+      top:10px;
+      left:50%;
+      transform:translateX(-50%);
+      }
+
+      /* ── retry button ─────────────────────────────────────────── */
+#retryBtn{
+  pointer-events:auto;            /* override #hud’s none      */
+  background:#ffffff22;
+  border-radius:12px;
+  width:42px; height:42px;
+  font-size:1.4rem;
+  backdrop-filter:blur(6px);
+  box-shadow:0 4px 6px #0008;
+}
+    
+
+    /* ────────────────────────────────────────────────────────────── */
+    /* LEVEL SELECT  MENU                                            */
+    /* ────────────────────────────────────────────────────────────── */
+    #levelMenu{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .5s ease;backdrop-filter:blur(4px);}  
+    #levelMenu.show{opacity:1;pointer-events:auto;}
+    #levelButtons{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:14px;width:min(400px,90vw);}  
+    .lvl-btn{aspect-ratio:1/1;font-size:1.4rem;font-weight:600;border-radius:18px;background:#ffffff22;backdrop-filter:blur(6px);box-shadow:0 4px 8px #0006;color:#fff;position:relative;overflow:hidden;transition:transform .25s;}
+    .lvl-btn.locked{color:#ffffff60;pointer-events:none;}
+    .lvl-btn:not(.locked):hover{transform:scale(1.06);} 
+    .lvl-btn.locked::after{content:"🔒";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;}
+
+    /* ────────────────────────────────────────────────────────────── */
+    /* GRID  AREA                                                    */
+    /* ────────────────────────────────────────────────────────────── */
+    #container{position:relative;transition:transform .5s cubic-bezier(.55,1.55,.45,1),opacity .4s ease;}
+    /*  Hide + rotate the board when the level‑select menu is open  */
+    #container.hidden{opacity:0;transform:scale(.8) rotate(-5deg);pointer-events:none;}
+
+    #grid{display:grid;gap:0;position:relative;}
+    .cell{
+      position:relative;
+      background:rgba(255,255,255,.12);
+      /*border-radius:10px;
+      box-shadow:0 6px 6px rgba(0,0,0,.35);*/
+     }  
+    .void{background:transparent;box-shadow:none;pointer-events:none;}
+
+    /* pieces */
+    .ball{position:absolute;border-radius:50%;transition:top .2s ease-in-out,left .2s ease-in-out;}
+    .ball.c1{background:#ffcc00;}
+    .ball.c2{background:#00e5ff;}
+    .ball.c3{background:#ee4488;}
+    .ball.c4{background:#8dfd2f;}
+
+    .orb{position:absolute;inset:20%;border-radius:50%;background:#ffffff40;animation:pulse 1.4s ease-in-out infinite;pointer-events:none;}
+    @keyframes pulse{0%,100%{transform:scale(.8);opacity:.6;}50%{transform:scale(1.05);opacity:1;}}
+
+    /* ────────────────────────────────────────────────────────────── */
+    /* WIN  + NEXT  LEVEL                                            */
+    /* ────────────────────────────────────────────────────────────── */
+    #nextLevelBtn{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(100px);background:#00c56a;font-weight:700;padding:16px 28px;border-radius:30px;font-size:1.2rem;box-shadow:0 8px 16px #0006;opacity:0;transition:transform .6s cubic-bezier(.4,1.7,.4,.9),opacity .5s ease;}
+    #nextLevelBtn.show{opacity:1;transform:translateX(-50%) translateY(0);} 
+
+    /* fireworks canvas should cover screen */
+    #fireworks{position:fixed;inset:0;pointer-events:none;}
+    /* ───────── restart-progress button ───────── */
+    #resetProgressBtn{
+      position:fixed;
+      bottom:30px;
+      left:50%;
+      transform:translateX(-50%) translateY(100px);
+      background:#ff5555;
+      padding:14px 32px;
+      font-size:1rem;
+      font-weight:700;
+      border-radius:30px;
+      box-shadow:0 8px 16px #0006;
+      opacity:0;
+      transition:transform .6s cubic-bezier(.4,1.7,.4,.9),opacity .5s ease;
+    }
+    #levelMenu.show #resetProgressBtn{      /* only visible while menu is open */
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    /* ───────── horizontal “rail” for level buttons ───────── */
+    #levelButtons{
+      display:flex !important;             /* override previous grid */
+      flex-wrap:nowrap;
+      gap:12px;
+      padding:0 25vw;                      /* side gutters keep rail centred */
+      overflow:hidden;                     /* hide overflow – we drag instead of scroll */
+      touch-action:none;                   /* disable browser scrolling */
+    }
+    #levelButtons .lvl-btn{flex:0 0 80px;} /* fixed 80 px wide buttons */
+    .lvl-btn.current{outline:3px solid #fff;}
+  </style>
+</head>
+<body>
+  <!-- HUD -->
+  <div id="hud">
+    <button id="levelSelectBtn">☰</button>
+    <div id="levelNumber">1</div>
+    <button id="retryBtn" aria-label="Retry level">↻</button>
+  </div>
+
+  <!-- level menu overlay -->
+  <div id="levelMenu">
+    <div id="levelButtons"></div>
+    <!-- restart-progress (shows only while the level menu is open) -->
+    <button id="resetProgressBtn" aria-label="Reset progress">RESET ↺</button>
+  </div>
+
+  <!-- game board container -->
+  <div id="container">
+    <div id="grid"></div>
+  </div>
+
+  <!-- next level button -->
+  <button id="nextLevelBtn">NEXT ▶</button>
+
+  <!-- fireworks canvas -->
+  <canvas id="fireworks"></canvas>
+
+<script>
+/**********************************************************************
+ * 0.  LEVEL DATA                                                     *
+ *********************************************************************/
+const LEVELS=[
+`
+.s....
+......
+.....e`,`
+e.x
+x..
+s..`,
+`
+xe..
+....
+sx..`,
+`
+..ee.
+.s...
+sx...`,
+`
+xxe.xx
+xxxsxx
+xxxxxx
+xxxsxx
+xxe.xx`,
+`
+xx.x..
+xs.xxx
+b.e...`,
+`
+.e...
+.xxxx
+.s.x.
+bx...`,
+`
+..xxe.
+.....x
+.sx..x
+b..xxx`,
+`
+..x..
+...x.
+.xe..
+.s.xx
+b.xxx
+`,
+`
+e.....x
+..x.x..
+.sxe...
+sxx....
+`,
+`
+..x..x
+......
+..x..x
+.s...x
+se..e.
+`,
+`
+x.....x
+e..x....
+.s..x.xx
+sx.xxe..
+`,
+`
+.....x.
+x......
+e...x..
+.s..e..
+sxx..x.
+`,
+`
+exx.xx
+....e.
+x..x..
+..x.x.
+.sx...
+s...x.
+`,
+`
+........
+......x.
+x.x...xx
+.sx....e
+s.xx...e
+`,
+`
+..x....
+....xxx
+e....x.
+.......
+xs.x..x
+b.xx...
+`,
+`
+..x.x....
+....x..xe
+.x.xx...x
+.s.xx....
+s....e..x
+`,
+`
+xe......
+..xx..xe
+...x.xx.
+........
+.s....x.
+sx.x..x.
+`,
+`
+.......
+x....xx
+.x.....
+..e.x..
+exxxx..
+xs.....
+s..x...
+`,
+`
+..x.xx....
+..xx..ex..
+.xe..xx..x
+xsx...xx.x
+s....x.x..
+`,
+`
+x....x...
+.xx.x.x..
+..x..x...
+.x.xx....
+.s.e...x.
+s.x...xe.
+`,
+`
+.x..x..x
+..xe....
+....xx.x
+x.....x.
+.x.xx...
+.s..x.x.
+s.xe..xx
+`,
+`
+...x.x...x
+x.x....x..
+.xx...e...
+x.....xxx.
+.s...x.x..
+sex..xxx..
+`,
+`
+xxx...e..
+......e..
+.....x...
+..x....x.
+.x.....x.
+.s....x..
+sx.xxx...
+`,
+`
+..x.x...
+........
+x.x.....
+........
+.....x.e
+.x..xxx.
+.s..xxxx
+s..ex...
+`,
+`
+...x......e
+.x..x.x.x..
+..ex.......
+x..........
+.s.x......x
+s..........
+`,
+`
+x.........x.
+....x.x....x
+.....x..ex..
+....x......e
+.s.x.xx...x.
+sx...x.x...x
+`,
+`
+x..x.....
+.x.......
+x..x.....
+.x.......
+.........
+.........
+.s......x
+b.e..xx..
+`,
+`
+...........
+x........x.
+..x.x......
+.xx..xx.x..
+..x.xx...x.
+.s.x..x..x.
+sx.x...xxee
+`,
+`
+..x.......
+xxx....xx.
+..........
+.........x
+..x.x..xe.
+....xx..x.
+.s.......x
+s.....exx.
+`,
+`
+..xe...x.
+.x.xxx...
+...x.x...
+.....x...
+.........
+xxxx.x...
+x..e.xxx.
+.s.......
+s.x.....x
+`,
+`
+.......xx.e.
+x.x..x....xx
+.......xx...
+.......x....
+..xxx...x...
+.s.....x....
+sx.x.....e.x
+`,
+`
+....x.x.exx
+.x...x..xx.
+....xx.....
+..xx...x...
+x...x......
+...xxxx..x.
+.s......xxx
+s.e........
+`,
+`
+x.........
+x.x.x.x.x.
+xx..x..x..
+....xxe...
+..xxxx...x
+.....xe...
+x......xxx
+xs.x..xxx.
+s.x.x.x...
+`,
+`
+ex......xx...
+.......x.....
+...........x.
+....x...x....
+x......x...xx
+.sxx.x.....e.
+s.x...x...x..
+`,
+`
+.x.xx.......
+...x...x..x.
+....x..x....
+..x.xx......
+x.x.x..xxe..
+x.x..x...x.x
+xs..........
+s.....ex....
+`,
+`
+x..........xx.
+xxx.x.x.....x.
+x....x........
+x..x.....x....
+xx...xee......
+.s...x..x.xx..
+sx......xx...x
+`,
+`
+..........
+.x........
+..x.x.....
+xxxx......
+x..x....x.
+e.........
+x......x..
+x....x...x
+xs....x...
+s...e...x.
+`,
+`
+............x
+...x..x.....x
+.x....x...xe.
+.......x...x.
+........x.xx.
+xx.x.x..x..x.
+xs...........
+se......xx...
+`,
+`
+.x.x........
+x......xx...
+..........x.
+......xx....
+...........x
+xx...x.....e
+xx...x.xxe.x
+.s.....xxx..
+s...x.......
+`,
+].map(s=>s.trim());
+
+/**********************************************************************
+ * 1.  STATE  &  PERSISTENCE                                          *
+ *********************************************************************/
+let current=0;
+const STORAGE_KEY='slidingBall_unlocked';
+let unlocked=parseInt(localStorage.getItem(STORAGE_KEY)||'1',10);
+/* ───────── menu-state flag ───────── */
+let menuOpen = false;           // true ↔ the level-select overlay is showing
+
+/**********************************************************************
+ * 2.  DOM ELEMENTS                                                   *
+ *********************************************************************/
+const grid=document.getElementById('grid');
+const container=document.getElementById('container');
+const levelBadge=document.getElementById('levelNumber');
+const menuOverlay=document.getElementById('levelMenu');
+const menuGrid=document.getElementById('levelButtons');
+const selectBtn=document.getElementById('levelSelectBtn');
+const nextBtn=document.getElementById('nextLevelBtn');
+const fireworksCanvas=document.getElementById('fireworks');
+const fwCtx=fireworksCanvas.getContext('2d');
+/* ── retry current level ──────────────────────────────────── */
+const retryBtn = document.getElementById('retryBtn');
+retryBtn.addEventListener('click', () => {
+  loadLevel(current, false);      // reload same level, no animation
+});
+let fwParticles=[];
+
+/**********************************************************************
+ * 3.  BUILD  LEVEL  MENU                                             *
+ *********************************************************************/
+function buildMenu(){
+
+  
+}
+
+// Open the level-select overlay and hide the board every time
+selectBtn.addEventListener('click',()=>{
+  buildMenu();
+  menuOverlay.classList.add('show');
+  container.classList.add('hidden');
+});
+
+// Clicking the dimmed backdrop closes the menu and brings the board back
+menuOverlay.addEventListener('click',e=>{
+  if(e.target===menuOverlay){
+    menuOverlay.classList.remove('show');
+    container.classList.remove('hidden');
+  }
+});
+
+/**********************************************************************
+ * 4.  LEVEL  SETUP                                                   *
+ *********************************************************************/
+let rows=[],W,H,cells=[],balls=[],positions=[],cellSize=0,offset=0,orbMap=[];
+const colorClasses=['c1','c2','c3','c4'];
+
+function loadLevel(idx,animated=true){
+  current=idx;
+  levelBadge.textContent=idx+1;
+  nextBtn.classList.remove('show');
+
+  // Always hide the board first so the fade/rotate happens every time
+  container.classList.add('hidden');
+
+  const rebuild=()=>{
+    buildLevel();
+    // Next frame – after the board is rendered and transform reset to 1
+    requestAnimationFrame(()=>{
+      container.classList.remove('hidden');
+      // Measure again at full scale so ball math is correct
+      measure();
+      updateDOM(false);
+    });
+  };
+
+  if(animated){
+    // Wait for the hide transition (500ms) to finish before rebuilding
+    setTimeout(rebuild,500);
+  }else{
+    rebuild();
+  }
+}
+
+function buildLevel(){
+  // clear previous
+  grid.innerHTML='';cells=[];balls=[];positions=[];orbMap=[];
+  rows=LEVELS[current].split(/\n/);
+  H=rows.length;W=Math.max(...rows.map(r=>r.length));
+  grid.style.gridTemplateColumns=`repeat(${W},1fr)`;
+  grid.style.gridTemplateRows=`repeat(${H},1fr)`;
+  const LONG=Math.max(W,H);
+  const boardCSS=size=>`calc(90vmin*${size}/${LONG})`;
+  grid.style.width=boardCSS(W);
+  grid.style.height=boardCSS(H);
+
+  rows.forEach((row,y)=>{
+    for(let x=0;x<W;x++){
+      const ch=row[x]||'x';
+      const cell=document.createElement('div');
+      cell.className='cell'+(ch==='x'?' void':'');
+      grid.appendChild(cell);
+      cells.push(cell);
+      if(ch==='e'){
+        const orb=document.createElement('div');orb.className='orb';cell.appendChild(orb);orbMap.push({x,y});
+      }
+      if(ch==='b'){
+        const orb=document.createElement('div');orb.className='orb';cell.appendChild(orb);orbMap.push({x,y});
+      }
+    }
+  });
+  rows.forEach((row,y)=>{
+    [...row].forEach((ch,x)=>{
+      if(ch==='s'){
+        const ball=document.createElement('div');ball.className=`ball ${colorClasses[balls.length%colorClasses.length]}`;
+        grid.appendChild(ball);
+        balls.push(ball);positions.push({x,y});
+      }
+      if(ch==='b'){
+        const ball=document.createElement('div');ball.className=`ball ${colorClasses[balls.length%colorClasses.length]}`;
+        grid.appendChild(ball);
+        balls.push(ball);positions.push({x,y});
+      }
+    });
+  });
+  // Temporary measure (board is still scaled .8) – good enough for sizing; will
+  // be corrected once the board is shown at full scale.
+  measure();
+  updateDOM(false);
+}
+
+/**********************************************************************
+ * 5.  LAYOUT / RESIZE                                               *
+ *********************************************************************/
+function measure(){
+  if(!cells[0])return;
+  cellSize = cells[0].offsetWidth;
+  offset=cellSize*0.15;
+  balls.forEach(ball=>{
+    ball.style.width=ball.style.height=cellSize*0.7+'px';
+  });
+}
+window.addEventListener('resize',()=>{
+  measure();
+  updateDOM(false);
+});
+
+/**********************************************************************
+ * 6.  MOVEMENT                                                      *
+ *********************************************************************/
+const KEY_DIR={ArrowUp:[0,-1],w:[0,-1],ArrowDown:[0,1],s:[0,1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0]};
+
+document.addEventListener('keydown',e=>{
+  const dir=KEY_DIR[e.key];
+  if(dir){slideAll(...dir);e.preventDefault();}
+});
+let sx=0,sy=0;
+
+document.addEventListener('touchstart',e=>{
+  const t=e.touches[0];sx=t.clientX;sy=t.clientY;
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  const t=e.changedTouches[0];const dx=t.clientX-sx,dy=t.clientY-sy;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<30)return;
+  Math.abs(dx)>Math.abs(dy)?slideAll(dx>0?1:-1,0):slideAll(0,dy>0?1:-1);
+  e.preventDefault();
+},{passive:false});
+
+function isVoid(x,y){return ((rows[y]&&rows[y][x])||'x')==='x';}
+function occupied(x,y,list){return list.some(p=>p.x===x&&p.y===y);}  
+
+function slideAll(dx,dy){
+  if(dx===0&&dy===0)return;
+  const order=[...positions.keys()].sort((i,j)=>{
+    if(dx===1) return positions[j].x-positions[i].x;
+    if(dx===-1)return positions[i].x-positions[j].x;
+    if(dy===1) return positions[j].y-positions[i].y;
+    if(dy===-1)return positions[i].y-positions[j].y;});
+  const newPos=positions.map(p=>({...p}));
+  order.forEach(idx=>{
+    let {x,y}=newPos[idx];
+    while(true){
+      const nx=x+dx,ny=y+dy;
+      if(nx<0||ny<0||nx>=W||ny>=H)break;
+      if(isVoid(nx,ny))break;
+      if(occupied(nx,ny,newPos))break;
+      x=nx;y=ny;
+    }
+    newPos[idx]={x,y};
+  });
+  positions=newPos;
+  updateDOM(true);
+  checkWin();
+}
+
+function updateDOM(animated=true){
+  balls.forEach((ball,i)=>{
+    if(!animated)ball.style.transition='none';
+    ball.style.left=positions[i].x*cellSize+offset+'px';
+    ball.style.top=positions[i].y*cellSize+offset+'px';
+    if(!animated){void ball.offsetWidth;ball.style.transition='top .2s ease-in-out,left .2s ease-in-out';}
+  });
+}  
+
+/**********************************************************************
+ * 7.  WIN CHECK + PROGRESSION                                       *
+ *********************************************************************/
+function checkWin(){
+  const win=orbMap.every(o=>occupied(o.x,o.y,positions));
+  if(win){celebrate();}
+}
+
+function celebrate(){spawnFireworks();nextBtn.classList.add('show');if(current+1>=unlocked){unlocked=current+2;localStorage.setItem(STORAGE_KEY,unlocked);}nextBtn.onclick=()=>{if(current+1<LEVELS.length){loadLevel(current+1,true);}else{menuOverlay.classList.add('show');}};}
+
+/**********************************************************************
+ * 8.  FIREWORKS  (simple 2‑d canvas)                                *
+ *********************************************************************/
+function spawnFireworks(){resizeCanvas();fireworksCanvas.classList.remove('hidden');fwParticles=[];for(let i=0;i<8;i++){setTimeout(()=>addBurst(),i*180);}animateFW();setTimeout(()=>fireworksCanvas.classList.add('hidden'),3500);}  
+function resizeCanvas(){fireworksCanvas.width=innerWidth;fireworksCanvas.height=innerHeight;}
+window.addEventListener('resize',resizeCanvas);
+function addBurst(){const count=60;const x=Math.random()*innerWidth,y=Math.random()*innerHeight*0.6;
+  for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=Math.random()*4+2;fwParticles.push({x,y,dx:Math.cos(angle)*speed,dy:Math.sin(angle)*speed,life:80,clr:`hsl(${Math.random()*360},100%,60%)`});}}
+function animateFW(){fwCtx.clearRect(0,0,fireworksCanvas.width,fireworksCanvas.height);fwParticles.forEach(p=>{fwCtx.fillStyle=p.clr;fwCtx.fillRect(p.x,p.y,3,3);p.x+=p.dx;p.y+=p.dy;p.dy+=0.05;p.life--;});fwParticles=fwParticles.filter(p=>p.life>0);if(fwParticles.length)requestAnimationFrame(animateFW);}  
+
+/**********************************************************************
+ * 9.  INIT                                                          *
+ *********************************************************************/
+
+if (isNaN(unlocked) || unlocked < 1) unlocked = 1;
+unlocked = Math.min(unlocked, LEVELS.length);          // don’t exceed total
+
+// ── jump straight to the latest level you’ve unlocked ──
+const startLevel = unlocked - 1;                       // 0-based index
+loadLevel(startLevel, false);                          // no intro animation
+
+/**********************************************************************
+ *10. HARD LOCK  ON  ZOOM / SCROLL                                   *
+ *********************************************************************/
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&['+','-','='].includes(e.key))e.preventDefault();});['gesturestart','gesturechange','gestureend'].forEach(evt=>document.addEventListener(evt,e=>e.preventDefault()));
+document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+
+/**********************************************************************
+ * 11.  LEVEL-RAIL (horizontal drag)  +  RESET PROGRESS               *
+ *********************************************************************/
+const levelRail = menuGrid;                 // alias – reads nicer
+const resetBtn  = document.getElementById('resetProgressBtn');
+
+/* ——— reset progress ——— */
+resetBtn.addEventListener('click', () => {
+  if (confirm('Reset all progress and relock every level?')) {
+    unlocked = 1;
+    localStorage.setItem(STORAGE_KEY, unlocked);
+    buildMenu();                            // rebuild the rail
+    loadLevel(0, false);                    // jump back to level 1
+       /* NEW — close the menu */
+    menuOverlay.classList.remove('show');
+    container.classList.remove('hidden');
+  }
+});
+
+/* ——— centring helpers ——— */
+let railOffset = 0, dragStart = 0, dragOrigin = 0;
+
+function setRailOffset(x){
+  railOffset = x;
+  levelRail.style.transform = `translateX(${railOffset}px)`;
+}
+function centreCurrentLevel(){
+  const btns = [...levelRail.children];
+  const btn  = btns[current];
+  if (!btn) return;
+  const viewWidth = levelRail.getBoundingClientRect().width;
+  const btnCentre = btn.offsetLeft + btn.offsetWidth / 2;
+  setRailOffset(viewWidth / 2 - btnCentre);
+}
+
+/* ——— touch drag ——— */
+levelRail.addEventListener('touchstart', e => {
+  dragStart  = e.touches[0].clientX;
+  dragOrigin = railOffset;
+},{passive:true});
+
+levelRail.addEventListener('touchmove', e => {
+  const dx = e.touches[0].clientX - dragStart;
+  setRailOffset(dragOrigin + dx);
+  e.preventDefault();                      // we’re handling the gesture
+},{passive:false});
+
+/* ——— rebuild rail & centre every time the menu opens ——— */
+const _origBuildMenu = buildMenu;
+buildMenu = function(){
+  _origBuildMenu();                        // keep original work
+  /* mark the current level so it gets an outline */
+  levelRail.children[current]?.classList.add('current');
+  requestAnimationFrame(centreCurrentLevel);
+};
+</script>
+</body>
+</html>
